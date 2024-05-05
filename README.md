@@ -1,2 +1,5 @@
 # brk.nvim
-Plugin for debugger breakpoint management.
+Plugin for managing debugger breakpoints.
+
+
+- https://github.com/ruby/debug

@@ -1,5 +1,8 @@
 # vi: ft=gitignore
 
+# Lua
+.luarc.json
+
 # General
 **/bin/**
 **/obj/**
