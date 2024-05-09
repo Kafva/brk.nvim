@@ -1,38 +1,58 @@
+---@type uv
+local uv = vim.uv
+
 M = {}
 
 ---@param filepath string
 ---@return string
 function M.readfile(filepath)
-    local f = io.open(filepath, 'r')
+    local content
+    local fd, err
+    fd, err = uv.fs_open(filepath, 'r', 438)
 
-    if not f then
+    if not fd then
+        vim.notify(err or ('Failed to open ' .. filepath), vim.log.levels.ERROR)
         return ""
     end
 
-    local content = f:read("*a")
+    content, err = uv.fs_read(fd, 8192)
 
-    f:close()
+    if not content then
+        vim.notify(err or ('Failed to read ' .. filepath), vim.log.levels.ERROR)
+        return ""
+    end
+
+    _, err = uv.fs_close(fd)
+    if err then
+        vim.notify(err, vim.log.levels.ERROR)
+        return ""
+    end
+
     return content
 end
 
 ---@param filepath string
 ---@param content string
----@return boolean
-function M.writefile(filepath, content)
-    local f = io.open(filepath, 'w')
-
-    if not f then
-        return false
+function M.writefile(filepath, mode, content)
+    local fd, err
+    fd, err = uv.fs_open(filepath, mode, 438) -- Octal representation of 0666
+    if not fd then
+        vim.notify(err or ('Failed to open ' .. filepath), vim.log.levels.ERROR)
+        return
     end
 
-    local _, error_message = f:write(content)
-    if error_message ~= nil then
-        vim.notify("Failed to write to file: " .. error_message, vim.log.levels.ERROR)
+    _, err = uv.fs_write(fd, content)
+
+    if err then
+        vim.notify(err, vim.log.levels.ERROR)
+        return
     end
 
-    f:close()
-    return error_message ~= nil
+    _, err = uv.fs_close(fd)
+    if err then
+        vim.notify(err, vim.log.levels.ERROR)
+        return
+    end
 end
-
 
 return M

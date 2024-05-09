@@ -1,5 +1,13 @@
 local M = {}
 
+---@class BrkOptions
+---@field default_bindings boolean
+---@field breakpoint_sign string
+---@field breakpoint_color string
+---@field lldb_file string
+---@field gdb_file string
+---@field enabled? boolean
+
 ---@type BrkOptions
 M.default_opts = {
     enabled = true,
@@ -10,7 +18,7 @@ M.default_opts = {
     gdb_file = "./.gdbinit",
 }
 
----@param opts BrkOptions?
+---@param user_opts BrkOptions?
 function M.setup(user_opts)
     local opts = vim.tbl_deep_extend("force", M.default_opts, user_opts or {})
 
@@ -22,7 +30,7 @@ function M.setup(user_opts)
                                          numhl='',
                                          linehl='',
                                          texthl=opts.breakpoint_color})
-    if opts and opts.default_mappings then
+    if opts and opts.default_bindings then
         vim.keymap.set('n', '<F9>', function() require('brk').toggle_breakpoint() end)
     end
 
