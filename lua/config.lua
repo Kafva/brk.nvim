@@ -13,7 +13,7 @@ M.default_opts = {
     enabled = true,
     default_bindings = true,
     breakpoint_sign = '󰝥 ',
-    breakpoint_color = 'Red',
+    breakpoint_color = 'Error',
     lldb_file = "./.lldbinit",
     gdb_file = "./.gdbinit",
 }
@@ -31,8 +31,10 @@ function M.setup(user_opts)
                                          linehl='',
                                          texthl=opts.breakpoint_color})
     if opts and opts.default_bindings then
-        vim.keymap.set('n', '<F9>', function() require('brk').toggle_breakpoint() end)
+        vim.keymap.set({"n", "i"}, "<F9>", require'brk'.toggle_breakpoint, {})
     end
+
+    vim.api.nvim_create_user_command("BrkClear", require'brk'.delete_all_breakpoints, {})
 
     -- Expose configuration variables
     for k,v in pairs(opts) do
