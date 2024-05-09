@@ -13,7 +13,14 @@ M.default_opts = {
     enabled = true,
     default_bindings = true,
     breakpoint_sign = '󰝥 ',
+    breakpoint_sign_priority = 90,
     breakpoint_color = 'Error',
+    filetypes = {
+        'c',
+        'cpp',
+        'rust',
+        'objc'
+    },
     lldb_file = "./.lldbinit",
     gdb_file = "./.gdbinit",
 }

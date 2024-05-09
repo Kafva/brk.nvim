@@ -1,8 +1,5 @@
 local util = require('util')
 local config = require('config')
----@type uv
-local uv = vim.uv
-
 
 M = {}
 
@@ -13,10 +10,29 @@ function M.write_breakpoints(file, line)
                             " --file " .. file ..
                             " --line " .. tostring(line) ..
                             "\n"
-    util.writefile(config.lldb_file, content)
+    util.writefile(config.lldb_file, 'a', content)
 end
 
+
+
+-- @return table
 function M.read_breakpoints()
+    local breakpoints = {}
+    local content = util.readfile(config.lldb_file)
+    for i,line in pairs(vim.split(content, '\n')) do
+        local file = (line:match(" --file ([^ ]+)") or ""):gsub('"', '')
+        -- Skip all lines tht do not have a --file
+        if file then
+            local ok, lnum = pcall(tonumber, line:match(" --line ([^ ]+)"))
+            if not ok then
+                error("Failed to parse breakpoint line number at " ..
+                      tostring(i) .. " in " .. config.lldb_file)
+            end
+            table.insert(breakpoints, { file = file, lnum = lnum })
+        end
+    end
+
+    return breakpoints
 end
 
 
