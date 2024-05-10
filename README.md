@@ -2,4 +2,10 @@
 Plugin for managing debugger breakpoints.
 
 
-- https://github.com/ruby/debug
+## Tips
+
+### lldb
+```bash
+# Start automatically
+lldb -o run ./tests/program
+```
