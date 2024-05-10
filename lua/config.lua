@@ -1,13 +1,5 @@
 local M = {}
 
----@class BrkOptions
----@field default_bindings boolean
----@field breakpoint_sign string
----@field breakpoint_color string
----@field lldb_file string
----@field gdb_file string
----@field enabled? boolean
-
 ---@type BrkOptions
 M.default_opts = {
     enabled = true,
@@ -42,6 +34,7 @@ function M.setup(user_opts)
     end
 
     vim.api.nvim_create_user_command("BrkClear", require'brk'.delete_all_breakpoints, {})
+    vim.api.nvim_create_user_command("BrkReload", require'brk'.load_breakpoints, {})
 
     -- Expose configuration variables
     for k,v in pairs(opts) do

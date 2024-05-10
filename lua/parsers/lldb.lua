@@ -14,8 +14,7 @@ function M.write_breakpoints(file, line)
 end
 
 
-
--- @return table
+---@return Breakpoint[] @A table of Breakpoint objects
 function M.read_breakpoints()
     local breakpoints = {}
     local content = util.readfile(config.lldb_file)
@@ -23,8 +22,8 @@ function M.read_breakpoints()
         local file = (line:match(" --file ([^ ]+)") or ""):gsub('"', '')
         -- Skip all lines tht do not have a --file
         if file then
-            local ok, lnum = pcall(tonumber, line:match(" --line ([^ ]+)"))
-            if not ok then
+            local _, lnum = pcall(tonumber, line:match(" --line ([^ ]+)"))
+            if not lnum then
                 error("Failed to parse breakpoint line number at " ..
                       tostring(i) .. " in " .. config.lldb_file)
             end
