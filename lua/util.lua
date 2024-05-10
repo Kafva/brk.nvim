@@ -8,7 +8,7 @@ M = {}
 function M.readfile(filepath)
     local content
     local fd, err
-    fd, err = uv.fs_open(filepath, 'r', 438)
+    fd, err = uv.fs_open(filepath, 'r', 0022)
 
     if not fd then
         vim.notify(err or ('Failed to open ' .. filepath), vim.log.levels.ERROR)
@@ -35,7 +35,7 @@ end
 ---@param content string
 function M.writefile(filepath, mode, content)
     local fd, err
-    fd, err = uv.fs_open(filepath, mode, 438) -- Octal representation of 0666
+    fd, err = uv.fs_open(filepath, mode, 0022)
     if not fd then
         vim.notify(err or ('Failed to open ' .. filepath), vim.log.levels.ERROR)
         return

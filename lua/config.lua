@@ -34,7 +34,9 @@ function M.setup(user_opts)
     end
 
     vim.api.nvim_create_user_command("BrkClear", require'brk'.delete_all_breakpoints, {})
-    vim.api.nvim_create_user_command("BrkReload", require'brk'.load_breakpoints, {})
+    vim.api.nvim_create_user_command("BrkReload", function()
+       require'brk'.load_breakpoints(vim.bo.filetype)
+    end, {})
 
     -- Expose configuration variables
     for k,v in pairs(opts) do
