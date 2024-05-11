@@ -58,10 +58,14 @@ function M.writefile(filepath, mode, content)
 end
 
 -- TODO
-function M.script_breakpoint_insert(filetype)
+function M.script_breakpoint_toggle(filetype)
     local line = vim.fn.line('.')
+    if line ~= 1 then
+        line = vim.fn.line('.') - 1
+    end
     local cmdstr = config.script_cmds[filetype]
     vim.api.nvim_buf_set_lines(0, line, line, false, {cmdstr})
+    vim.cmd 'normal! k'
 end
 
 function M.script_breakpoint_delete(filetype)

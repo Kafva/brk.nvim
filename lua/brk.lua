@@ -1,5 +1,6 @@
 local config = require 'config'
 local cdbg = require 'cdbg'
+local util = require 'util'
 
 local M = {}
 
@@ -34,6 +35,7 @@ local function write_breakpoints_to_file(filetype)
 
     if vim.tbl_contains(config.filetypes_c, filetype) then
         cdbg.write_breakpoints(breakpoints)
+        reload_breakpoint_signs()
 
     else
         vim.notify("Cannot write breakpoints for filetype '" .. filetype .. "'",
@@ -41,7 +43,6 @@ local function write_breakpoints_to_file(filetype)
         return
     end
 
-    reload_breakpoint_signs()
 end
 
 local function breakpoint_eq(b1, b2)
@@ -62,6 +63,15 @@ end
 function M.toggle_breakpoint()
     local buf = vim.api.nvim_get_current_buf()
     local lnum = vim.fn.line('.')
+
+    if vim.tbl_contains(config.filetypes_script, vim.bo.filetype) then
+        util.script_breakpoint_toggle(vim.bo.filetype)
+        return
+
+    elseif vim.tbl_contains(config.filetypes_go, vim.bo.filetype) then
+        -- TODO
+        return
+    end
 
     ---@type table
     local bufsigns = vim.fn.sign_getplaced(buf, {group='brk',
@@ -117,6 +127,7 @@ function M.load_breakpoints(filetype)
 
     if vim.tbl_contains(config.filetypes_c, filetype) then
         breakpoints = cdbg.read_breakpoints()
+        reload_breakpoint_signs()
 
     elseif vim.tbl_contains(config.filetypes_go, filetype) then
         -- TODO
@@ -129,10 +140,7 @@ function M.load_breakpoints(filetype)
     else
         vim.notify("Unsupported filetype '" .. filetype .. "'",
                    vim.log.levels.ERROR)
-        return
     end
-
-    reload_breakpoint_signs()
 end
 
 ---@param user_opts BrkOptions?
