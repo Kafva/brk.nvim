@@ -27,6 +27,11 @@ end
 ---@return Breakpoint[] @A table of Breakpoint objects
 function M.read_breakpoints()
     local breakpoints = {}
+
+    if vim.fn.filereadable(config.lldb_file) == 0 then
+        return {}
+    end
+
     local content = util.readfile(config.lldb_file)
     for i,line in pairs(vim.split(content, '\n')) do
         local file = line:match(" --file ([^ ]+)")
