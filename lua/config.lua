@@ -27,9 +27,9 @@ M.default_opts = {
         'lua'
     },
     script_cmds = {
-        lua = 'require"debugger"() -- Set DBG_REMOTEPORT=8777 for remote debugging',
+        lua = "require'debugger'() -- Set DBG_REMOTEPORT=8777 for remote debugging",
         python = "__import__('pdb').set_trace()",
-        ruby = 'require "debug"; debugger"',
+        ruby = "require 'debug'; debugger",
     }
 }
 

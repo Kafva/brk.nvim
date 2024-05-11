@@ -57,12 +57,20 @@ function M.writefile(filepath, mode, content)
     end
 end
 
--- TODO
 function M.script_breakpoint_toggle(filetype)
     local line = vim.fn.line('.')
     if line ~= 1 then
         line = vim.fn.line('.') - 1
     end
+
+    local current_line = vim.api.nvim_get_current_line()
+    local match, _ = current_line:find(config.script_cmds[filetype])
+    if match then
+        -- TODO fix indentation
+        vim.api.nvim_buf_set_lines(0, line, line+1, false, {})
+        return
+    end
+
     local cmdstr = config.script_cmds[filetype]
     vim.api.nvim_buf_set_lines(0, line, line, false, {cmdstr})
     vim.cmd 'normal! k'

@@ -25,33 +25,35 @@ end
 -- Returns nil if the line is not a breakpoint
 ---@return Breakpoint|nil
 local function breakpoint_from_line(linenr, line)
+    local lnum, file
     if config.dbg_file_format == "gdb" then
-        local file = line:match("break ([^:]+):")
+        file = line:match("break ([^:]+):")
         if file == nil then
             return nil
         end
-        local lnum = line:match(":(%d+)")
-        return { file = file, lnum = lnum }
+        lnum = line:match(":(%d+)")
 
     elseif config.dbg_file_format == "lldb" then
-        local file = line:match(" --file ([^ ]+)")
+        file = line:match(" --file ([^ ]+)")
         if file == nil then
             return nil
         end
-
-        file = file:gsub('"', '')
-        local _, lnum = pcall(tonumber, line:match(" --line ([^ ]+)"))
-        if not lnum then
-            vim.notify("Failed to parse --line argument at line " ..
-                  tostring(linenr) .. " in " .. config.dbg_file,
-                  vim.log.levels.ERROR)
-            return nil
-        end
-
-        return { file = file, lnum = lnum }
+        lnum = line:match(" --line ([^ ]+)")
     else
         error("Unknown debugger file format: '" .. config.dbg_file_format .. "'")
+        return
     end
+
+    file = file:gsub('"', '')
+    _, lnum = pcall(tonumber, lnum)
+    if not lnum then
+        vim.notify("Failed to parse line " ..
+              tostring(linenr) .. " in " .. config.dbg_file,
+              vim.log.levels.ERROR)
+        return nil
+    end
+
+    return { file = file, lnum = lnum }
 end
 
 ---@param breakpoints Breakpoint[]
