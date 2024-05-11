@@ -1,5 +1,5 @@
 local config = require 'config'
-local lldb = require 'parsers.lldb'
+local cdbg = require 'cdbg'
 
 local M = {}
 
@@ -35,7 +35,7 @@ local function write_breakpoints_to_file(filetype)
        ft == 'cpp' or
        ft == 'rust' or
        ft == 'objc' then
-        lldb.write_breakpoints(breakpoints)
+        cdbg.write_breakpoints(breakpoints)
 
     elseif vim.tbl_contains(config.filetypes, ft) then
         vim.notify("Unsupported filetype '" .. ft .. "'", vim.log.levels.ERROR)
@@ -65,7 +65,8 @@ function M.toggle_breakpoint()
     local lnum = vim.fn.line('.')
 
     ---@type table
-    local bufsigns = vim.fn.sign_getplaced(buf, {group='brk', lnum = lnum})
+    local bufsigns = vim.fn.sign_getplaced(buf, {group='brk',
+                                                 lnum = tostring(lnum)})
     local breakpoint = {file = vim.fn.expand'%', lnum = lnum}
 
     if #bufsigns > 0 and #bufsigns[1].signs > 0 then
@@ -119,7 +120,16 @@ function M.load_breakpoints(filetype)
        filetype == 'cpp' or
        filetype == 'rust' or
        filetype == 'objc' then
-         breakpoints = lldb.read_breakpoints()
+        breakpoints = cdbg.read_breakpoints()
+
+    elseif filetype == 'go' then
+        breakpoints = {}
+
+    elseif filetype == 'lua' or
+           filetype == 'python' or
+           filetype == 'ruby' then
+        -- No config file to load
+        breakpoints = {}
 
     elseif vim.tbl_contains(config.filetypes, filetype) then
         vim.notify("Unsupported filetype '" .. filetype .. "'", vim.log.levels.ERROR)

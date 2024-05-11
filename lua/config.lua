@@ -1,9 +1,14 @@
+---@type uv
+local uv = vim.uv
+
 local M = {}
 
 ---@type BrkOptions
 M.default_opts = {
     enabled = true,
     default_bindings = true,
+    dbg_file_format = "lldb",
+    dbg_file = "./.lldbinit",
     breakpoint_sign = '󰝥 ',
     breakpoint_sign_priority = 90,
     breakpoint_color = 'Error',
@@ -13,8 +18,6 @@ M.default_opts = {
         'rust',
         'objc'
     },
-    lldb_file = "./.lldbinit",
-    gdb_file = "./.gdbinit",
 }
 
 ---@param user_opts BrkOptions?
@@ -23,6 +26,12 @@ function M.setup(user_opts)
 
     if not opts.enabled then
         return
+    end
+
+    -- Use gdb if explicitly configured or if .gdbinit exists
+    local ok, _ = uv.fs_access("./.gdbinit", 'r')
+    if ok or opts.dbg_file_format == "gdb" then
+        opts.dbg_file = opts.dbg_file or "./.gdbinit"
     end
 
     vim.fn.sign_define('BrkBreakpoint', {text=opts.breakpoint_sign,
