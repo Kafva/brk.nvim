@@ -29,16 +29,15 @@ end
 --- Update the breakpoints listed in the init file for the debugger
 ---@param filetype string|nil
 local function write_breakpoints_to_file(filetype)
-    local ft = filetype or vim.bo.filetype
+    ---@diagnostic disable-next-line: redefined-local
+    local filetype = filetype or vim.bo.filetype
 
-    if ft == 'c' or
-       ft == 'cpp' or
-       ft == 'rust' or
-       ft == 'objc' then
+    if vim.tbl_contains(config.filetypes_c, filetype) then
         cdbg.write_breakpoints(breakpoints)
 
-    elseif vim.tbl_contains(config.filetypes, ft) then
-        vim.notify("Unsupported filetype '" .. ft .. "'", vim.log.levels.ERROR)
+    else
+        vim.notify("Cannot write breakpoints for filetype '" .. filetype .. "'",
+                   vim.log.levels.ERROR)
         return
     end
 
@@ -116,23 +115,20 @@ end
 function M.load_breakpoints(filetype)
     breakpoints = {}
 
-    if filetype == 'c' or
-       filetype == 'cpp' or
-       filetype == 'rust' or
-       filetype == 'objc' then
+    if vim.tbl_contains(config.filetypes_c, filetype) then
         breakpoints = cdbg.read_breakpoints()
 
-    elseif filetype == 'go' then
+    elseif vim.tbl_contains(config.filetypes_go, filetype) then
+        -- TODO
         breakpoints = {}
 
-    elseif filetype == 'lua' or
-           filetype == 'python' or
-           filetype == 'ruby' then
+    elseif vim.tbl_contains(config.filetypes_script, filetype) then
         -- No config file to load
         breakpoints = {}
 
-    elseif vim.tbl_contains(config.filetypes, filetype) then
-        vim.notify("Unsupported filetype '" .. filetype .. "'", vim.log.levels.ERROR)
+    else
+        vim.notify("Unsupported filetype '" .. filetype .. "'",
+                   vim.log.levels.ERROR)
         return
     end
 
@@ -145,7 +141,9 @@ function M.setup(user_opts)
 
     -- Load breakpoints for each FileType event
     vim.api.nvim_create_autocmd("Filetype", {
-        pattern = config.filetypes,
+        pattern = vim.tbl_flatten{config.filetypes_c,
+                                  config.filetypes_go,
+                                  config.filetypes_script},
         callback = function (ev)
             M.load_breakpoints(ev.match)
         end

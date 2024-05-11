@@ -22,17 +22,6 @@ local function breakpoint_tostring(breakpoint)
     end
 end
 
----@param breakpoints Breakpoint[]
-function M.write_breakpoints(breakpoints)
-    local content = ""
-    for _,breakpoint in pairs(breakpoints) do
-        content = content .. breakpoint_tostring(breakpoint)
-    end
-
-    -- Overwrite the lldb file with the new set of breakpoints
-    util.writefile(config.dbg_file, 'w', content)
-end
-
 -- Returns nil if the line is not a breakpoint
 ---@return Breakpoint|nil
 local function breakpoint_from_line(linenr, line)
@@ -65,13 +54,24 @@ local function breakpoint_from_line(linenr, line)
     end
 end
 
+---@param breakpoints Breakpoint[]
+function M.write_breakpoints(breakpoints)
+    local content = ""
+    for _,breakpoint in pairs(breakpoints) do
+        content = content .. breakpoint_tostring(breakpoint)
+    end
+
+    -- Overwrite the lldb file with the new set of breakpoints
+    util.writefile(config.dbg_file, 'w', content)
+end
+
 ---@return Breakpoint[] Table of Breakpoint objects
 function M.read_breakpoints()
     local breakpoints = {}
 
     local ok, _ = uv.fs_access(config.dbg_file, 'r')
     if not ok then
-        return breakpoints
+        return {}
     end
 
     local content = util.readfile(config.dbg_file)

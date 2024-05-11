@@ -5,6 +5,10 @@
 ---@field breakpoint_sign string
 ---@field breakpoint_color string
 ---@field enabled? boolean
+---@field filetypes_c string[]
+---@field filetypes_go string[]
+---@field filetypes_script string[]
+---@field script_cmds table<string, string>
 
 ---@class Breakpoint
 ---@field file string

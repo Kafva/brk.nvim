@@ -12,12 +12,25 @@ M.default_opts = {
     breakpoint_sign = '󰝥 ',
     breakpoint_sign_priority = 90,
     breakpoint_color = 'Error',
-    filetypes = {
+    filetypes_c = {
         'c',
         'cpp',
+        'objc',
         'rust',
-        'objc'
     },
+    filetypes_go = {
+        'go',
+    },
+    filetypes_script = {
+        'python',
+        'ruby',
+        'lua'
+    },
+    script_cmds = {
+        lua = 'require"debugger"() -- Set DBG_REMOTEPORT=8777 for remote debugging',
+        python = "__import__('pdb').set_trace()",
+        ruby = 'require "debug"; debugger"',
+    }
 }
 
 ---@param user_opts BrkOptions?
@@ -31,7 +44,10 @@ function M.setup(user_opts)
     -- Use gdb if explicitly configured or if .gdbinit exists
     local ok, _ = uv.fs_access("./.gdbinit", 'r')
     if ok or opts.dbg_file_format == "gdb" then
-        opts.dbg_file = opts.dbg_file or "./.gdbinit"
+        opts.dbg_file_format = "gdb"
+        if opts.dbg_file == "./.lldbinit" then
+            opts.dbg_file = "./.gdbinit"
+        end
     end
 
     vim.fn.sign_define('BrkBreakpoint', {text=opts.breakpoint_sign,
