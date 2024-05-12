@@ -1,5 +1,7 @@
 # vi: ft=gitignore
 
+.testenv
+
 # General
 **/bin/**
 **/obj/**
