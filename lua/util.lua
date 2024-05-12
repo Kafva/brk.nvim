@@ -57,43 +57,4 @@ function M.writefile(filepath, mode, content)
     end
 end
 
-function M.script_breakpoint_toggle(filetype)
-    local line = vim.fn.line('.')
-    if line ~= 1 then
-        line = vim.fn.line('.') - 1
-    end
-
-    local current_line = vim.api.nvim_get_current_line()
-    local match, _ = current_line:find(config.script_cmds[filetype])
-    if match then
-        -- TODO fix indentation
-        vim.api.nvim_buf_set_lines(0, line, line+1, false, {})
-        return
-    end
-
-    local cmdstr = config.script_cmds[filetype]
-    vim.api.nvim_buf_set_lines(0, line, line, false, {cmdstr})
-    vim.cmd 'normal! k'
-end
-
-function M.script_breakpoint_delete(filetype)
-    local bufnr = vim.api.nvim_get_current_buf()
-    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-    local new_lines = {}
-    local cmdstr = config.script_cmds[filetype]
-    if cmdstr == nil then
-        vim.notify('No breakpoints configured for filetype ' .. filetype,
-                    vim.log.levels.WARN)
-        return
-    end
-
-    for _, line in ipairs(lines) do
-        if not line:find(cmdstr) then
-            table.insert(new_lines, line)
-        end
-    end
-
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
-end
-
 return M

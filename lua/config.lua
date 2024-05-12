@@ -7,11 +7,12 @@ local M = {}
 M.default_opts = {
     enabled = true,
     default_bindings = true,
-    dbg_file_format = "lldb",
-    dbg_file = "./.lldbinit",
     breakpoint_sign = '󰝥 ',
     breakpoint_sign_priority = 90,
     breakpoint_color = 'Error',
+
+    dbg_file_format_c = "lldb",
+    dbg_file_c = "./.lldbinit",
     filetypes_c = {
         'c',
         'cpp',
@@ -26,7 +27,7 @@ M.default_opts = {
         'ruby',
         'lua'
     },
-    script_cmds = {
+    cmds_script = {
         lua = "require'debugger'() -- Set DBG_REMOTEPORT=8777 for remote debugging",
         python = "__import__('pdb').set_trace()",
         ruby = "require 'debug'; debugger",
@@ -43,10 +44,10 @@ function M.setup(user_opts)
 
     -- Use gdb if explicitly configured or if .gdbinit exists
     local ok, _ = uv.fs_access("./.gdbinit", 'r')
-    if ok or opts.dbg_file_format == "gdb" then
-        opts.dbg_file_format = "gdb"
-        if opts.dbg_file == "./.lldbinit" then
-            opts.dbg_file = "./.gdbinit"
+    if ok or opts.dbg_file_format_c == "gdb" then
+        opts.dbg_file_format_c = "gdb"
+        if opts.dbg_file_c == "./.lldbinit" then
+            opts.dbg_file_c = "./.gdbinit"
         end
     end
 
