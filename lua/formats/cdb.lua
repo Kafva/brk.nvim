@@ -11,17 +11,17 @@ local breakpoints = {}
 ---@param breakpoint Breakpoint
 ---@return string
 local function breakpoint_tostring(breakpoint)
-    if config.dbg_file_format_c == "gdb" then
+    if config.cdb_file_format == "gdb" then
         return "break " ..
                 breakpoint.file .. ":" .. tostring(breakpoint.lnum) ..
                "\n"
-    elseif config.dbg_file_format_c == "lldb" then
+    elseif config.cdb_file_format == "lldb" then
         return "breakpoint set " ..
                " --file " .. breakpoint.file ..
                " --line " .. tostring(breakpoint.lnum) ..
                "\n"
     else
-        error("Unknown debugger format: " .. config.dbg_file_format_c)
+        error("Unknown debugger format: " .. config.cdb_file_format)
     end
 end
 
@@ -33,7 +33,7 @@ local function write_breakpoints_to_file()
     end
 
     -- Overwrite the lldb file with the new set of breakpoints
-    util.writefile(config.dbg_file_c, 'w', content)
+    util.writefile(config.cdb_file, 'w', content)
 end
 
 local function reload_breakpoint_signs()
@@ -77,21 +77,21 @@ end
 ---@return Breakpoint|nil
 local function breakpoint_from_line(linenr, line)
     local lnum, file
-    if config.dbg_file_format_c == "gdb" then
+    if config.cdb_file_format == "gdb" then
         file = line:match("break ([^:]+):")
         if file == nil then
             return nil
         end
         lnum = line:match(":(%d+)")
 
-    elseif config.dbg_file_format_c == "lldb" then
+    elseif config.cdb_file_format == "lldb" then
         file = line:match(" --file ([^ ]+)")
         if file == nil then
             return nil
         end
         lnum = line:match(" --line ([^ ]+)")
     else
-        error("Unknown debugger file format: '" .. config.dbg_file_format_c .. "'")
+        error("Unknown debugger file format: '" .. config.cdb_file_format .. "'")
         return
     end
 
@@ -99,7 +99,7 @@ local function breakpoint_from_line(linenr, line)
     _, lnum = pcall(tonumber, lnum)
     if not lnum then
         vim.notify("Failed to parse line " ..
-              tostring(linenr) .. " in " .. config.dbg_file_c,
+              tostring(linenr) .. " in " .. config.cdb_file,
               vim.log.levels.ERROR)
         return nil
     end
@@ -108,12 +108,12 @@ local function breakpoint_from_line(linenr, line)
 end
 
 function M.load_breakpoints()
-    local ok, _ = uv.fs_access(config.dbg_file_c, 'r')
+    local ok, _ = uv.fs_access(config.cdb_file, 'r')
     if not ok then
         return
     end
 
-    local content = util.readfile(config.dbg_file_c)
+    local content = util.readfile(config.cdb_file)
     for i,line in pairs(vim.split(content, '\n')) do
         local breakpoint = breakpoint_from_line(i, line)
         if breakpoint then

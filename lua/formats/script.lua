@@ -1,3 +1,5 @@
+local config = require 'config'
+
 local M = {}
 
 function M.load_breakpoints()
@@ -6,20 +8,23 @@ end
 function M.delete_all_breakpoints()
 end
 
+---@param filetype string
+---@param lnum number
 function M.toggle_breakpoint(filetype, lnum)
-    -- if line ~= 1 then
-    --     line = vim.fn.line('.') - 1
-    -- end
+    local content = vim.api.nvim_buf_get_lines(0, lnum, lnum + 1, false)[1]
 
-    -- local current_line = vim.api.nvim_get_current_line()
-    -- local match, _ = current_line:find(config.cmds_script[filetype])
-    -- if match then
-    --     vim.api.nvim_buf_set_text(0, line, 0, line + 1, 0, {''})
-    --     return
-    -- end
+    local match, _ = content:find(config.script_cmds[filetype])
+    if match then
+        -- Remove breakpoint marker
+        vim.api.nvim_buf_set_text(0, lnum, 0, lnum + 1, 0, {''})
+        return
+    end
 
-    -- local cmdstr = config.cmds_script[filetype]
-    -- vim.api.nvim_buf_set_text(0, line, line, false, {cmdstr})
+    -- Add breakpoint marker
+    local indent = string.rep(' ', vim.fn.indent(lnum))
+    local cmdstr = indent .. config.script_cmds[filetype]
+    vim.api.nvim_buf_set_text(0, lnum, 0, lnum + 1, #cmdstr, {cmdstr})
+
     -- vim.cmd 'normal! k'
 end
 
