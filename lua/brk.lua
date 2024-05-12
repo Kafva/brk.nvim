@@ -8,7 +8,7 @@ local M = {}
 ---@param filetype string
 function M.load_breakpoints(filetype)
     if vim.tbl_contains(config.cdb_filetypes, filetype) then
-        cdb.load_breakpoints()
+        cdb.load_breakpoints(config.cdb_file_format, config.cdb_file)
 
     elseif vim.tbl_contains(config.delve_filetypes, filetype) then
         delve.load_breakpoints()
@@ -24,7 +24,7 @@ end
 
 function M.delete_all_breakpoints()
     if vim.tbl_contains(config.cdb_filetypes, vim.bo.filetype) then
-        cdb.delete_all_breakpoints()
+        cdb.delete_all_breakpoints(config.cdb_file_format, config.cdb_file)
 
     elseif vim.tbl_contains(config.delve_filetypes, vim.bo.filetype) then
         delve.delete_all_breakpoints()
@@ -44,7 +44,7 @@ function M.toggle_breakpoint(lnum)
     local filetype = vim.bo.filetype
 
     if vim.tbl_contains(config.cdb_filetypes, filetype) then
-        cdb.toggle_breakpoint(filetype, lnum)
+        cdb.toggle_breakpoint(config.cdb_file_format, config.cdb_file, filetype, lnum)
 
     elseif vim.tbl_contains(config.delve_filetypes, filetype) then
         delve.toggle_breakpoint(filetype, lnum)

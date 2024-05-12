@@ -10,30 +10,32 @@ local breakpoints = {}
 
 ---@param breakpoint Breakpoint
 ---@return string
-local function breakpoint_tostring(breakpoint)
-    if config.cdb_file_format == "gdb" then
+local function breakpoint_tostring(cdb_file_format, breakpoint)
+    if cdb_file_format == "gdb" then
         return "break " ..
                 breakpoint.file .. ":" .. tostring(breakpoint.lnum) ..
                "\n"
-    elseif config.cdb_file_format == "lldb" then
-        return "breakpoint set " ..
+    elseif cdb_file_format == "lldb" then
+        return "breakpoint set" ..
                " --file " .. breakpoint.file ..
                " --line " .. tostring(breakpoint.lnum) ..
                "\n"
     else
-        error("Unknown debugger format: " .. config.cdb_file_format)
+        error("Unknown debugger format: " .. cdb_file_format)
     end
 end
 
 --- Update the breakpoints listed in the init file for the debugger
-local function write_breakpoints_to_file()
+---@param cdb_file_format string
+---@param cdb_file string
+local function write_breakpoints_to_file(cdb_file_format, cdb_file)
     local content = ""
     for _,breakpoint in pairs(breakpoints) do
-        content = content .. breakpoint_tostring(breakpoint)
+        content = content .. breakpoint_tostring(cdb_file_format, breakpoint)
     end
 
     -- Overwrite the lldb file with the new set of breakpoints
-    util.writefile(config.cdb_file, 'w', content)
+    util.writefile(cdb_file, 'w', content)
 end
 
 local function reload_breakpoint_signs()
@@ -74,24 +76,28 @@ local function breakpoint_exists(predicate)
 end
 
 -- Returns nil if the line is not a breakpoint
+---@param cdb_file_format string
+---@param cdb_file string
+---@param cdb_file_linenr number
+---@param line string
 ---@return Breakpoint|nil
-local function breakpoint_from_line(linenr, line)
+local function breakpoint_from_line(cdb_file_format, cdb_file, cdb_file_linenr, line)
     local lnum, file
-    if config.cdb_file_format == "gdb" then
+    if cdb_file_format == "gdb" then
         file = line:match("break ([^:]+):")
         if file == nil then
             return nil
         end
         lnum = line:match(":(%d+)")
 
-    elseif config.cdb_file_format == "lldb" then
+    elseif cdb_file_format == "lldb" then
         file = line:match(" --file ([^ ]+)")
         if file == nil then
             return nil
         end
         lnum = line:match(" --line ([^ ]+)")
     else
-        error("Unknown debugger file format: '" .. config.cdb_file_format .. "'")
+        error("Unknown debugger file format: '" .. cdb_file_format .. "'")
         return
     end
 
@@ -99,7 +105,7 @@ local function breakpoint_from_line(linenr, line)
     _, lnum = pcall(tonumber, lnum)
     if not lnum then
         vim.notify("Failed to parse line " ..
-              tostring(linenr) .. " in " .. config.cdb_file,
+              tostring(cdb_file_linenr) .. " in " .. cdb_file,
               vim.log.levels.ERROR)
         return nil
     end
@@ -107,15 +113,17 @@ local function breakpoint_from_line(linenr, line)
     return { file = file, lnum = lnum }
 end
 
-function M.load_breakpoints()
-    local ok, _ = uv.fs_access(config.cdb_file, 'r')
+---@param cdb_file_format string
+---@param cdb_file string
+function M.load_breakpoints(cdb_file_format, cdb_file)
+    local ok, _ = uv.fs_access(cdb_file, 'r')
     if not ok then
         return
     end
 
-    local content = util.readfile(config.cdb_file)
+    local content = util.readfile(cdb_file)
     for i,line in pairs(vim.split(content, '\n')) do
-        local breakpoint = breakpoint_from_line(i, line)
+        local breakpoint = breakpoint_from_line(cdb_file_format, cdb_file, i, line)
         if breakpoint then
             table.insert(breakpoints, breakpoint)
         end
@@ -124,15 +132,21 @@ function M.load_breakpoints()
     reload_breakpoint_signs()
 end
 
-function M.delete_all_breakpoints()
+---@param cdb_file_format string
+---@param cdb_file string
+function M.delete_all_breakpoints(cdb_file_format, cdb_file)
     vim.fn.sign_unplace('brk')
     breakpoints = {}
 
-    write_breakpoints_to_file()
+    write_breakpoints_to_file(cdb_file_format, cdb_file)
     reload_breakpoint_signs()
 end
 
-function M.toggle_breakpoint(_, lnum)
+---@param cdb_file_format string
+---@param cdb_file string
+---@param _ string|nil
+---@param lnum number
+function M.toggle_breakpoint(cdb_file_format, cdb_file, _, lnum)
     local buf = vim.api.nvim_get_current_buf()
     ---@type table
     local bufsigns = vim.fn.sign_getplaced(buf, {group='brk',
@@ -173,7 +187,7 @@ function M.toggle_breakpoint(_, lnum)
         table.insert(breakpoints, breakpoint)
     end
 
-    write_breakpoints_to_file()
+    write_breakpoints_to_file(cdb_file_format, cdb_file)
 end
 
 return M

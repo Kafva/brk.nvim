@@ -1,11 +1,14 @@
-vim.cmd([[set runtimepath+=.]])
-
 vim.api.nvim_create_user_command("RunTests", function(opts)
-    local path = opts.fargs[1] or "tests"
+    local target = opts.fargs[1]
     vim.schedule(function()
-        require("plenary.test_harness").test_directory(
-            path,
-            { init = "./tests/minimal_init.lua" }
-        )
+        -- Tests are ran from 'brk.nvim/tests/.env'
+        local harness = require('plenary.test_harness')
+        if vim.fn.isdirectory(target) == 1 then
+            harness.test_directory(target)
+        elseif vim.fn.filereadable(target) == 1 then
+            harness.test_file(target)
+        else
+            error("Invalid path to tests")
+        end
     end)
-end, { nargs = "?" })
+end, { nargs = 1 })
