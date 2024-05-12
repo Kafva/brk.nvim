@@ -6,7 +6,7 @@
 ---@field breakpoint_color string
 ---@field enabled? boolean
 ---@field filetypes_c string[]
----@field filetypes_go string[]
+---@field filetypes_delve string[]
 ---@field filetypes_script string[]
 ---@field cmds_script table<string, string>
 

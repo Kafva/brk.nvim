@@ -19,7 +19,7 @@ M.default_opts = {
         'objc',
         'rust',
     },
-    filetypes_go = {
+    filetypes_delve = {
         'go',
     },
     filetypes_script = {
