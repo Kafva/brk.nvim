@@ -27,6 +27,8 @@ fi
 
 if [ ! -e "$PLUGINS/brk.nvim" ]; then
     ln -s "$BRK_NVIM" "$PLUGINS/brk.nvim"
+    # TODO: hack
+    ln -s "$BRK_NVIM/tests/spec/test_util.lua" "$BRK_NVIM/tests/.env/test_util.lua"
 fi
 
 export XDG_CONFIG_HOME="./config"
