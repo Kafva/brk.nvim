@@ -12,7 +12,7 @@ describe("Script breakpoints:", function()
 
     it("Toggle a Python breakpoint", function()
         local lnum = 12
-        vim.cmd[[edit tests/files/main.py]]
+        vim.cmd[[edit tests/files/py/main.py]]
         local original_content = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
 
         -- Add breakpoint

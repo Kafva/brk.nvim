@@ -1,5 +1,7 @@
 ---@class BrkOptions
 ---@field default_bindings? boolean
+---@field auto_start? boolean Create a debugger init file that automatically
+---starts a process on entry.
 ---@field cdb_file_format? string
 ---@field cdb_file? string
 ---@field breakpoint_sign? string

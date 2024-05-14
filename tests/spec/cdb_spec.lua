@@ -15,7 +15,7 @@ describe("lldb/gdb breakpoints:", function()
         test_util.rm_f('./.lldbinit')
         test_util.rm_f('./.gdbinit')
 
-        vim.cmd[[edit tests/files/main.c]]
+        vim.cmd[[edit tests/files/c/main.c]]
     end)
 
     after_each(function()
@@ -28,7 +28,7 @@ describe("lldb/gdb breakpoints:", function()
         cdb.toggle_breakpoint('lldb', './.lldbinit', nil, 9)
 
         local content = util.readfile('.lldbinit')
-        assert.equals("breakpoint set --file tests/files/main.c --line 9\n", content)
+        assert.equals("breakpoint set --file tests/files/c/main.c --line 9\n" .. "run\n", content)
         assert(test_util.sign_exists('brk', 9), 'no sign placed at line 9')
 
         -- Remove breakpoint
@@ -44,7 +44,7 @@ describe("lldb/gdb breakpoints:", function()
         cdb.toggle_breakpoint('gdb', './.gdbinit', nil, 7)
 
         local content = util.readfile('.gdbinit')
-        assert.equals("break tests/files/main.c:7\n", content)
+        assert.equals("break tests/files/c/main.c:7\n" .. "run\n", content)
         assert(test_util.sign_exists('brk', 7), 'no sign placed at line 7')
 
         -- Remove breakpoint

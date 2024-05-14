@@ -34,6 +34,10 @@ local function write_breakpoints_to_file(cdb_file_format, cdb_file)
         content = content .. breakpoint_tostring(cdb_file_format, breakpoint)
     end
 
+    if #content > 0 and config.auto_start then
+        content = content .. "run\n"
+    end
+
     -- Overwrite the lldb file with the new set of breakpoints
     util.writefile(cdb_file, 'w', content)
 end

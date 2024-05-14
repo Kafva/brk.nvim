@@ -7,6 +7,7 @@ local M = {}
 M.default_opts = {
     enabled = true,
     default_bindings = true,
+    auto_start = true,
     breakpoint_sign = '󰝥 ',
     breakpoint_sign_priority = 90,
     breakpoint_color = 'Error',

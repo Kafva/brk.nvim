@@ -7,6 +7,11 @@ function M.load_breakpoints()
 end
 
 function M.delete_all_breakpoints()
+    local cmdstr = config.script_cmds[vim.bo.filetype]
+    if cmdstr then
+        local cmd = ":g/" .. cmdstr .. "/d "
+        vim.cmd(cmd)
+    end
 end
 
 -- If no breakpoint exists on the current line, place one and move the current
