@@ -1,6 +1,8 @@
 # vi: ft=gitignore
 
-/tests/.env
+.testenv
+.gdbinit
+.lldbinit
 
 # General
 **/bin/**

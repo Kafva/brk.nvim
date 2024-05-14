@@ -1,3 +1,6 @@
+-- Add 'brk.nvim/tests/.env/../spec' to LUA_PATH
+package.path = package.path .. ':../spec'
+
 vim.api.nvim_create_user_command("RunTests", function(opts)
     local target = opts.fargs[1]
     vim.schedule(function()
