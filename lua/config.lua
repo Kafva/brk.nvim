@@ -20,18 +20,21 @@ M.default_opts = {
         'objc',
         'rust',
     },
+    delve_file = "./.dlvinit",
     delve_filetypes = {
         'go',
     },
     script_filetypes = {
         'python',
         'ruby',
-        'lua'
+        'lua',
+        -- 'go'
     },
     script_cmds = {
         lua = "require'debugger'() -- Set DBG_REMOTEPORT=8777 for remote debugging",
         python = "__import__('pdb').set_trace()",
         ruby = "require 'debug'; debugger",
+        -- go = "runtime.Breakpoint()"
     }
 }
 

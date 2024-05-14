@@ -1,11 +1,11 @@
 package main
 
 import (
-  "flag"
-  "fmt"
-  "log"
-  "os"
-  "path/filepath"
+    "flag"
+    "fmt"
+    "log"
+    "os"
+    "path/filepath"
 )
 
 const USAGE = `usage: %s [flags] ` + "\n"

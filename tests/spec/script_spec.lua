@@ -4,7 +4,6 @@ local config = require 'config'
 local assert = require 'luassert.assert'
 local script = require "formats.script"
 
---- Tests are not ran in parallel
 describe("Script breakpoints:", function()
     before_each(function()
         script.delete_all_breakpoints()
