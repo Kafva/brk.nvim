@@ -1,24 +1,29 @@
 # brk.nvim
-Plugin for managing debugger breakpoints.
-
-## Supported debuggers
+Plugin for basic management of debugger breakpoints in Neovim. The plugin
+defines a breakpoint mapping (`<F9>` by default) and automatically updates
+`.lldbinit` / `.gdbinit` with matching breakpoints.
 
 * [lldb/gdb](https://lldb.llvm.org/use/map.html) for C, C++, Rust etc.
+
+The `<F9>` mapping is also setup to insert inline breakpoints for debuggers in the following languages:
+
 * [delve](https://github.com/go-delve/delve/blob/master/Documentation/cli/getting_started.md) for Go
 * [pdb](https://docs.python.org/3/library/pdb.html) for Python
 * [debugger.lua](https://github.com/kafva/debugger.lua) for Lua
 * [ruby/debug](https://github.com/ruby/debug) for Ruby
 
+```lua
+-- Basic configuration, see lua/config.lua for more options
+require 'brk'.setup {
+    default_bindings = true,
+    auto_start = true, -- Insert 'run' command at the end of .lldb/gdbinit automatically
+    breakpoint_sign = '󰝥 ',
+    breakpoint_color = 'Error',
 
-## Tips
-```bash
-# Delve does not autoload initfiles in the same way as gdb/lldb you need to
-# explicitly provide one, brk.nvim uses .dlvinit by default
-(cd tests/files/go &&
-    echo "break main.main" > .dlvinit &&
-    echo "continue" >> .dlvinit &&
-    dlv debug --init .dlvinit)
-
-# There is also an inline alternative for Go:
-#   runtime.Breakpoint()
+    cdb_file_format = "lldb", -- Preferred format when inserting breakpoints,
+                              -- automatically overriden if .gdbinit exists in the current directory
+    cdb_file = "./.lldbinit",
+}
 ```
+
+For more advanced debugger integrations, consider [nvim-dap](https://github.com/mfussenegger/nvim-dap).

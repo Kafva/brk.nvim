@@ -7,7 +7,7 @@ function M.load_breakpoints()
 end
 
 function M.delete_all_breakpoints()
-    local cmdstr = config.script_cmds[vim.bo.filetype]
+    local cmdstr = config.inline_cmds[vim.bo.filetype]
     if cmdstr then
         local cmd = ":g/" .. cmdstr .. "/d "
         vim.cmd(cmd)
@@ -30,7 +30,7 @@ function M.toggle_breakpoint(filetype, lnum)
     ---@type string
     local content = lines[1]
 
-    if vim.trim(content) == config.script_cmds[filetype] then
+    if vim.trim(content) == config.inline_cmds[filetype] then
         -- Remove breakpoint marker
         vim.api.nvim_buf_set_text(0, lnum - 1, 0, lnum, 0, {''})
         return
@@ -38,7 +38,7 @@ function M.toggle_breakpoint(filetype, lnum)
 
     -- Add breakpoint marker above current line
     local indent = string.rep(' ', vim.fn.indent(lnum))
-    local cmdstr = indent .. config.script_cmds[filetype]
+    local cmdstr = indent .. config.inline_cmds[filetype]
     local new_lines = {cmdstr, ''}
 
     vim.api.nvim_buf_set_text(0, lnum - 1, 0, lnum - 1, 0, new_lines)

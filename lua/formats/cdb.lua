@@ -3,6 +3,10 @@ local config = require('config')
 ---@type uv
 local uv = vim.uv
 
+---@class Breakpoint
+---@field file string
+---@field lnum number
+
 M = {}
 
 ---@type Breakpoint[]
