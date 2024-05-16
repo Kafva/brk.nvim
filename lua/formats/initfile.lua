@@ -12,38 +12,51 @@ M = {}
 ---@type Breakpoint[]
 local breakpoints = {}
 
----@param initfile_format DebuggerType
+---@param debugger_type DebuggerType
 ---@param breakpoint Breakpoint
 ---@return string
-local function breakpoint_tostring(initfile_format, breakpoint)
-    if initfile_format == "gdb" then
+local function breakpoint_tostring(debugger_type, breakpoint)
+    if debugger_type == "gdb" then
         return "break " ..
                 breakpoint.file .. ":" .. tostring(breakpoint.lnum) ..
                "\n"
-    elseif initfile_format == "lldb" then
+    elseif debugger_type == "lldb" then
         return "breakpoint set" ..
                " --file " .. breakpoint.file ..
                " --line " .. tostring(breakpoint.lnum) ..
                "\n"
+    elseif debugger_type == "delve" then
+        local breakpoint_name = breakpoint.file:gsub('^%.', '')
+                                               :gsub('/', '_') ..
+                                               "_line" ..
+                                               tostring(breakpoint.lnum)
+        return "break " ..
+               breakpoint_name ..
+               breakpoint.file .. ":" .. tostring(breakpoint.lnum) ..
+               "\n"
     else
-        error("Unknown debugger format: " .. initfile_format)
+        error("Unknown debugger type: " .. debugger_type)
     end
 end
 
 --- Update the breakpoints listed in the init file for the debugger
----@param initfile_format DebuggerType
-local function write_breakpoints_to_file(initfile_format)
+---@param debugger_type DebuggerType
+local function write_breakpoints_to_file(debugger_type)
     local content = ""
     for _,breakpoint in pairs(breakpoints) do
-        content = content .. breakpoint_tostring(initfile_format, breakpoint)
+        content = content .. breakpoint_tostring(debugger_type, breakpoint)
     end
 
     if #content > 0 and config.auto_start then
-        content = content .. "run\n"
+        if debugger_type == "delve" then
+            content = content .. "continue\n"
+        else
+            content = content .. "run\n"
+        end
     end
 
     -- Overwrite the lldb file with the new set of breakpoints
-    util.writefile(config.initfile_paths[initfile_format], 'w', content)
+    util.writefile(config.initfile_paths[debugger_type], 'w', content)
 end
 
 local function reload_breakpoint_signs()
@@ -84,27 +97,30 @@ local function breakpoint_exists(predicate)
 end
 
 -- Returns nil if the line is not a breakpoint
----@param initfile_format DebuggerType
+---@param debugger_type DebuggerType
 ---@param initfile_linenr number
 ---@param line string
 ---@return Breakpoint|nil
-local function breakpoint_from_line(initfile_format, initfile_linenr, line)
+local function breakpoint_from_line(debugger_type, initfile_linenr, line)
     local lnum, file
-    if initfile_format == "gdb" then
+    if debugger_type == "gdb" then
         file = line:match("break ([^:]+):")
         if file == nil then
             return nil
         end
         lnum = line:match(":(%d+)")
 
-    elseif initfile_format == "lldb" then
+    elseif debugger_type == "lldb" then
         file = line:match(" --file ([^ ]+)")
         if file == nil then
             return nil
         end
         lnum = line:match(" --line ([^ ]+)")
+
+    elseif debugger_type == "delve" then
+        return nil
     else
-        error("Unknown debugger file format: '" .. initfile_format .. "'")
+        error("Unknown debugger file format: '" .. debugger_type .. "'")
         return
     end
 
@@ -113,7 +129,7 @@ local function breakpoint_from_line(initfile_format, initfile_linenr, line)
     if not lnum then
         vim.notify("Failed to parse line " ..
               tostring(initfile_linenr) .. " in " ..
-              config.initfile_paths[initfile_format],
+              config.initfile_paths[debugger_type],
               vim.log.levels.ERROR)
         return nil
     end
@@ -137,9 +153,9 @@ function M.get_debugger_type(filetype)
     return config.preferred_debugger_format
 end
 
----@param initfile_format DebuggerType
-function M.load_breakpoints(initfile_format)
-    local initfile_path = config.initfile_paths[initfile_format]
+---@param debugger_type DebuggerType
+function M.load_breakpoints(debugger_type)
+    local initfile_path = config.initfile_paths[debugger_type]
     local ok, _ = uv.fs_access(initfile_path, 'r')
     if not ok then
         return
@@ -147,7 +163,7 @@ function M.load_breakpoints(initfile_format)
 
     local content = util.readfile(initfile_path)
     for i,line in pairs(vim.split(content, '\n')) do
-        local breakpoint = breakpoint_from_line(initfile_format, i, line)
+        local breakpoint = breakpoint_from_line(debugger_type, i, line)
         if breakpoint then
             table.insert(breakpoints, breakpoint)
         end
@@ -156,18 +172,18 @@ function M.load_breakpoints(initfile_format)
     reload_breakpoint_signs()
 end
 
----@param initfile_format DebuggerType
-function M.delete_all_breakpoints(initfile_format)
+---@param debugger_type DebuggerType
+function M.delete_all_breakpoints(debugger_type)
     vim.fn.sign_unplace('brk')
     breakpoints = {}
 
-    write_breakpoints_to_file(initfile_format)
+    write_breakpoints_to_file(debugger_type)
     reload_breakpoint_signs()
 end
 
----@param initfile_format DebuggerType
+---@param debugger_type DebuggerType
 ---@param lnum number
-function M.toggle_breakpoint(initfile_format, lnum)
+function M.toggle_breakpoint(debugger_type, lnum)
     local buf = vim.api.nvim_get_current_buf()
     ---@type table
     local bufsigns = vim.fn.sign_getplaced(buf, {group='brk',
@@ -208,7 +224,7 @@ function M.toggle_breakpoint(initfile_format, lnum)
         table.insert(breakpoints, breakpoint)
     end
 
-    write_breakpoints_to_file(initfile_format)
+    write_breakpoints_to_file(debugger_type)
 end
 
 return M

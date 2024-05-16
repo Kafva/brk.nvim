@@ -3,6 +3,10 @@
 .testenv
 .gdbinit
 .lldbinit
+.dlvinit
+
+# Go
+__debug_bin*
 
 # General
 **/bin/**
