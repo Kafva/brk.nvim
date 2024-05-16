@@ -11,6 +11,7 @@ import (
 const USAGE = `usage: %s [flags] ` + "\n"
 
 func main() {
+    value := 1
     log.SetFlags(log.Ltime)
 
     flag.Usage = func() {
@@ -21,7 +22,7 @@ func main() {
     if len(os.Args) > 1 && os.Args[1] == "-h" {
         flag.Usage()
     } else {
-        log.Printf("%+v\n", os.Args)
+        log.Printf("%d: %+v\n", value, os.Args)
     }
 
 }

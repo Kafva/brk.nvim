@@ -1,13 +1,13 @@
 local config = require 'config'
-local cdb = require 'formats.cdb'
+local initfile = require 'formats.initfile'
 local inline = require 'formats.inline'
 
 local M = {}
 
 ---@param filetype string
 function M.load_breakpoints(filetype)
-    if vim.tbl_contains(config.cdb_filetypes, filetype) then
-        cdb.load_breakpoints(config.cdb_file_format, config.cdb_file)
+    if vim.tbl_contains(config.initfile_filetypes, filetype) then
+        initfile.load_breakpoints(config.initfile_format)
 
     elseif vim.tbl_contains(config.inline_filetypes, filetype) then
         inline.load_breakpoints()
@@ -19,8 +19,8 @@ function M.load_breakpoints(filetype)
 end
 
 function M.delete_all_breakpoints()
-    if vim.tbl_contains(config.cdb_filetypes, vim.bo.filetype) then
-        cdb.delete_all_breakpoints(config.cdb_file_format, config.cdb_file)
+    if vim.tbl_contains(config.initfile_filetypes, vim.bo.filetype) then
+        initfile.delete_all_breakpoints(config.initfile_format)
 
     elseif vim.tbl_contains(config.inline_filetypes, vim.bo.filetype) then
         inline.delete_all_breakpoints()
@@ -31,13 +31,12 @@ function M.delete_all_breakpoints()
     end
 end
 
-function M.toggle_breakpoint(lnum)
-    ---@diagnostic disable-next-line: redefined-local
-    local lnum = lnum or vim.fn.line('.')
+function M.toggle_breakpoint(user_lnum)
+    local lnum = user_lnum or vim.fn.line('.')
     local filetype = vim.bo.filetype
 
-    if vim.tbl_contains(config.cdb_filetypes, filetype) then
-        cdb.toggle_breakpoint(config.cdb_file_format, config.cdb_file, filetype, lnum)
+    if vim.tbl_contains(config.initfile_filetypes, filetype) then
+        initfile.toggle_breakpoint(config.initfile_format, filetype, lnum)
 
     elseif vim.tbl_contains(config.inline_filetypes, filetype) then
         inline.toggle_breakpoint(filetype, lnum)
@@ -54,7 +53,7 @@ function M.setup(user_opts)
 
     -- Load breakpoints for each FileType event
     vim.api.nvim_create_autocmd("Filetype", {
-        pattern = vim.tbl_flatten{config.cdb_filetypes,
+        pattern = vim.tbl_flatten{config.initfile_filetypes,
                                   config.inline_filetypes},
         callback = function (ev)
             M.load_breakpoints(ev.match)

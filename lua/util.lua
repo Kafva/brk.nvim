@@ -1,5 +1,3 @@
-local config = require 'config'
-
 ---@type uv
 local uv = vim.uv
 
