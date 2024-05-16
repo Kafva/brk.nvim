@@ -20,7 +20,7 @@ require 'brk'.setup {
     breakpoint_sign = '󰝥 ',
     breakpoint_color = 'Error',
 
-    preferred_initfile_format = "lldb", -- Preferred format when inserting breakpoints,
+    preferred_debugger_format = "lldb", -- Preferred format when inserting breakpoints,
                               -- automatically overriden if .gdbinit exists in the current directory
     initfile_path = "./.lldbinit",
 }

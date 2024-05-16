@@ -7,7 +7,8 @@ local M = {}
 ---@param filetype string
 function M.load_breakpoints(filetype)
     if vim.tbl_contains(config.initfile_filetypes, filetype) then
-        initfile.load_breakpoints(config.initfile_format)
+        local debugger_type = initfile.get_debugger_type(filetype)
+        initfile.load_breakpoints(debugger_type)
 
     elseif vim.tbl_contains(config.inline_filetypes, filetype) then
         inline.load_breakpoints()
@@ -20,7 +21,8 @@ end
 
 function M.delete_all_breakpoints()
     if vim.tbl_contains(config.initfile_filetypes, vim.bo.filetype) then
-        initfile.delete_all_breakpoints(config.initfile_format)
+        local debugger_type = initfile.get_debugger_type(vim.bo.filetype)
+        initfile.delete_all_breakpoints(debugger_type)
 
     elseif vim.tbl_contains(config.inline_filetypes, vim.bo.filetype) then
         inline.delete_all_breakpoints()
@@ -36,7 +38,8 @@ function M.toggle_breakpoint(user_lnum)
     local filetype = vim.bo.filetype
 
     if vim.tbl_contains(config.initfile_filetypes, filetype) then
-        initfile.toggle_breakpoint(config.initfile_format, filetype, lnum)
+        local debugger_type = initfile.get_debugger_type(filetype)
+        initfile.toggle_breakpoint(debugger_type, lnum)
 
     elseif vim.tbl_contains(config.inline_filetypes, filetype) then
         inline.toggle_breakpoint(filetype, lnum)

@@ -12,6 +12,7 @@ M = {}
 ---@type Breakpoint[]
 local breakpoints = {}
 
+---@param initfile_format DebuggerType
 ---@param breakpoint Breakpoint
 ---@return string
 local function breakpoint_tostring(initfile_format, breakpoint)
@@ -30,7 +31,7 @@ local function breakpoint_tostring(initfile_format, breakpoint)
 end
 
 --- Update the breakpoints listed in the init file for the debugger
----@param initfile_format string
+---@param initfile_format DebuggerType
 local function write_breakpoints_to_file(initfile_format)
     local content = ""
     for _,breakpoint in pairs(breakpoints) do
@@ -83,7 +84,7 @@ local function breakpoint_exists(predicate)
 end
 
 -- Returns nil if the line is not a breakpoint
----@param initfile_format string
+---@param initfile_format DebuggerType
 ---@param initfile_linenr number
 ---@param line string
 ---@return Breakpoint|nil
@@ -121,29 +122,22 @@ local function breakpoint_from_line(initfile_format, initfile_linenr, line)
 end
 
 ---@param filetype string
----@return string|nil
-function M.get_breakpoint_format(filetype)
+---@return DebuggerType
+function M.get_debugger_type(filetype)
     if filetype == 'go' then
-        return 'delve'
+        return DebuggerType.DELVE
     end
 
-    local initfiles = vim.tbl_filter(function (initfile_path)
-        return vim.fn.filereadable(initfile_path) == 1
-    end, config.initfile_paths)
-
-    if #initfiles == 0 then
-        return config.preferred_initfile_format
-
-    elseif #initfiles == 1 then
-        return initfiles[1]
-
-    else
-        vim.notify("More than one initfile found: " .. tostring(initfiles), vim.log.levels.WARN)
-        return initfiles[1]
+    for debugger_type,initfile_path in pairs(config.initfile_paths) do
+        if vim.fn.filereadable(initfile_path) == 1 then
+            return debugger_type
+        end
     end
+
+    return config.preferred_debugger_format
 end
 
----@param initfile_format string
+---@param initfile_format DebuggerType
 function M.load_breakpoints(initfile_format)
     local initfile_path = config.initfile_paths[initfile_format]
     local ok, _ = uv.fs_access(initfile_path, 'r')
@@ -162,7 +156,7 @@ function M.load_breakpoints(initfile_format)
     reload_breakpoint_signs()
 end
 
----@param initfile_format string
+---@param initfile_format DebuggerType
 function M.delete_all_breakpoints(initfile_format)
     vim.fn.sign_unplace('brk')
     breakpoints = {}
@@ -171,10 +165,9 @@ function M.delete_all_breakpoints(initfile_format)
     reload_breakpoint_signs()
 end
 
----@param initfile_format string
----@param _ string|nil
+---@param initfile_format DebuggerType
 ---@param lnum number
-function M.toggle_breakpoint(initfile_format, _, lnum)
+function M.toggle_breakpoint(initfile_format, lnum)
     local buf = vim.api.nvim_get_current_buf()
     ---@type table
     local bufsigns = vim.fn.sign_getplaced(buf, {group='brk',

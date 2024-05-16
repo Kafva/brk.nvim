@@ -1,16 +1,23 @@
 local M = {}
 
+---@enum DebuggerType
+DebuggerType = {
+    GDB = "gdb",
+    LLDB = "lldb",
+    DELVE = "delve"
+}
+
+
 ---@class BrkOptions
----@field default_bindings? boolean
----@field auto_start? boolean Create a debugger init file that automatically
----starts a process on entry.
----@field preferred_initfile_format? string
----@field initfile_paths? string[]
+---@field default_bindings? boolean Enable default bindings
+---@field auto_start? boolean Write an init file that automatically starts the debugger
+---@field preferred_debugger_format? DebuggerType
 ---@field breakpoint_sign? string
 ---@field breakpoint_color? string
+---@field initfile_paths? table<DebuggerType, string>
 ---@field initfile_filetypes? string[]
----@field inline_filetypes? string[]
 ---@field inline_cmds? table<string, string>
+---@field inline_filetypes? string[]
 
 ---@type BrkOptions
 M.default_opts = {
@@ -20,11 +27,11 @@ M.default_opts = {
     breakpoint_sign_priority = 90,
     breakpoint_color = 'Error',
 
-    preferred_initfile_format = 'lldb',
+    preferred_debugger_format = DebuggerType.LLDB,
     initfile_paths = {
-        lldb = "./.lldbinit",
-        gdb = "./.gdbinit",
-        delve = "./.dlvinit",
+        [DebuggerType.LLDB] = "./.lldbinit",
+        [DebuggerType.GDB] = "./.gdbinit",
+        [DebuggerType.DELVE] = "./.dlvinit",
     },
     initfile_filetypes = {
         'c',
