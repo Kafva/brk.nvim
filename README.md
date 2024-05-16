@@ -1,7 +1,7 @@
 # brk.nvim
 Neovim plugin for basic management of debugger breakpoints. The plugin
 provides an easy way to toggle breakpoints inside nvim (mapped to `<F9>` by
-default) which automatically updates the init file (`.lldbinit` etc.) with
+default) which automatically updates the debugger init file (`.lldbinit` etc.) with
 matching breakpoints.
 
 If you want a fully integrated debugger inside nvim, this plugin is not for you,
@@ -13,7 +13,7 @@ supported debuggers.
 * [lldb/gdb](https://lldb.llvm.org/use/map.html) for C, C++, Rust etc.
 * [delve](https://github.com/go-delve/delve/blob/master/Documentation/cli/getting_started.md) for Go
 
-Note that delve does not autoload initfiles in the same way as gdb/lldb, you need to
+Note that delve does not autoload init files in the same way as gdb/lldb, you need to
 explicitly provide one, brk.nvim uses .dlvinit by default
 
 ```bash
@@ -36,10 +36,14 @@ require 'brk'.setup {
     breakpoint_sign = '󰝥 ',
     breakpoint_color = 'Error',
 
-    -- Preferred debugger when no initfile exists
+    -- Preferred debugger when no init file exists
     preferred_debugger_format = "lldb",
 }
 ```
+
+Commands:
+* `BrkClear`: Clear all breakpoints from current buffer
+* `BrkReload`: Reload debugger init file
 
 To run unit tests
 ```bash

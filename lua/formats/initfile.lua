@@ -26,12 +26,10 @@ local function breakpoint_tostring(debugger_type, breakpoint)
                " --line " .. tostring(breakpoint.lnum) ..
                "\n"
     elseif debugger_type == "delve" then
-        local breakpoint_name = breakpoint.file:gsub('^%.', '')
-                                               :gsub('/', '_') ..
-                                               "_line" ..
+        local breakpoint_name = breakpoint.file:gsub('[^a-zA-Z0-9]', '') ..
                                                tostring(breakpoint.lnum)
         return "break " ..
-               breakpoint_name ..
+               breakpoint_name .. " " ..
                breakpoint.file .. ":" .. tostring(breakpoint.lnum) ..
                "\n"
     else
@@ -118,6 +116,7 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
         lnum = line:match(" --line ([^ ]+)")
 
     elseif debugger_type == "delve" then
+        -- TODO
         return nil
     else
         error("Unknown debugger file format: '" .. debugger_type .. "'")
@@ -157,16 +156,16 @@ end
 function M.load_breakpoints(debugger_type)
     local initfile_path = config.initfile_paths[debugger_type]
     local ok, _ = uv.fs_access(initfile_path, 'r')
-    if not ok then
-        return
-    end
-
-    local content = util.readfile(initfile_path)
-    for i,line in pairs(vim.split(content, '\n')) do
-        local breakpoint = breakpoint_from_line(debugger_type, i, line)
-        if breakpoint then
-            table.insert(breakpoints, breakpoint)
+    if ok then
+        local content = util.readfile(initfile_path)
+        for i,line in pairs(vim.split(content, '\n')) do
+            local breakpoint = breakpoint_from_line(debugger_type, i, line)
+            if breakpoint then
+                table.insert(breakpoints, breakpoint)
+            end
         end
+    else
+        breakpoints = {}
     end
 
     reload_breakpoint_signs()
