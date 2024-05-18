@@ -190,7 +190,7 @@ function M.update_breakpoints(debugger_type)
 
     -- Filter out all breakpoints for the current file
     breakpoints = vim.tbl_filter(function (b)
-        return file == b.file
+        return file ~= b.file
     end, breakpoints)
 
     -- Reinsert breakpoints to match sign positions (which may have changed)

@@ -7,7 +7,7 @@ local util = require "util"
 local test_util = require "tests.test_util"
 
 --- Tests are not ran in parallel
-describe("lldb/gdb breakpoints:", function()
+describe("Debugger initfile breakpoints:", function()
     before_each(function()
         initfile.delete_all_breakpoints('lldb')
         initfile.delete_all_breakpoints('gdb')
@@ -16,12 +16,7 @@ describe("lldb/gdb breakpoints:", function()
         test_util.rm_f('./.lldbinit')
         test_util.rm_f('./.gdbinit')
         test_util.rm_f('./.dlvinit')
-    end)
-
-    after_each(function()
-        test_util.rm_f('./.lldbinit')
-        test_util.rm_f('./.gdbinit')
-        test_util.rm_f('./.dlvinit')
+        vim.system({"git", "checkout", "tests/files"})
     end)
 
     it("Toggle a lldb breakpoint", function()
@@ -76,5 +71,28 @@ describe("lldb/gdb breakpoints:", function()
         content = util.readfile('.dlvinit')
         assert.equals("", content)
         assert(not test_util.sign_exists('brk', 22), 'sign still placed at line 22')
+    end)
+
+    it("Breakpoints are moved when sign placement changes", function()
+        vim.cmd[[edit tests/files/go/main.go]]
+
+        -- Add breakpoint
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+
+        local content = util.readfile('.dlvinit')
+        assert.equals("break testsfilesgomaingo22 tests/files/go/main.go:22\n" .. "continue\n", content)
+        assert(test_util.sign_exists('brk', 22), 'no sign placed at line 22')
+
+        -- Insert some more content before line 22
+        vim.api.nvim_buf_set_lines(0, 21, 21, false, { "// line1",
+                                                       "// line2",
+                                                       "// line3",
+                                                       "// line4" })
+        vim.cmd[[write]]
+
+        -- Breakpoint should now be at line 26
+        local content = util.readfile('.dlvinit')
+        assert.equals("break testsfilesgomaingo26 tests/files/go/main.go:26\n" .. "continue\n", content)
+        assert(test_util.sign_exists('brk', 26), 'no sign placed at line 26')
     end)
 end)
