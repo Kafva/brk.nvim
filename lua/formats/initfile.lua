@@ -177,6 +177,33 @@ function M.load_breakpoints(debugger_type)
 end
 
 ---@param debugger_type DebuggerType
+function M.update_breakpoints(debugger_type)
+    local buf = vim.api.nvim_get_current_buf()
+    local file = vim.fn.expand '%'
+
+    -- Determine where signs are currently placed
+    local bufsigns = vim.fn.sign_getplaced(buf, { group = 'brk' })
+
+    if #bufsigns == 0 then
+        return
+    end
+
+    -- Filter out all breakpoints for the current file
+    breakpoints = vim.tbl_filter(function (b)
+        return file == b.file
+    end, breakpoints)
+
+    -- Reinsert breakpoints to match sign positions (which may have changed)
+    for _,sign in pairs(bufsigns[1].signs) do
+        local breakpoint = { file = file, lnum = sign.lnum }
+        table.insert(breakpoints, breakpoint)
+    end
+
+    write_breakpoints_to_file(debugger_type)
+    reload_breakpoint_signs()
+end
+
+---@param debugger_type DebuggerType
 function M.delete_all_breakpoints(debugger_type)
     vim.fn.sign_unplace('brk')
     breakpoints = {}

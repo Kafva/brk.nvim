@@ -75,6 +75,9 @@ function M.setup(user_opts)
     for k,v in pairs(opts) do
         M[k] = v
     end
+
+    M['filetypes'] = vim.tbl_flatten{opts.initfile_filetypes,
+                                     opts.inline_filetypes}
 end
 
 return M

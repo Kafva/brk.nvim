@@ -19,6 +19,20 @@ function M.load_breakpoints(filetype)
     end
 end
 
+---@param filetype string
+function M.update_breakpoints(filetype)
+    if vim.tbl_contains(config.initfile_filetypes, filetype) then
+        local debugger_type = initfile.get_debugger_type(filetype)
+        initfile.update_breakpoints(debugger_type)
+
+    elseif vim.tbl_contains(config.inline_filetypes, filetype) then
+        inline.update_breakpoints()
+    else
+        vim.notify("Cannot update breakpoints for unregistered filetype '" .. filetype .. "'",
+                   vim.log.levels.ERROR)
+    end
+end
+
 function M.delete_all_breakpoints()
     if vim.tbl_contains(config.initfile_filetypes, vim.bo.filetype) then
         local debugger_type = initfile.get_debugger_type(vim.bo.filetype)
@@ -56,10 +70,19 @@ function M.setup(user_opts)
 
     -- Load breakpoints for each FileType event
     vim.api.nvim_create_autocmd("Filetype", {
-        pattern = vim.tbl_flatten{config.initfile_filetypes,
-                                  config.inline_filetypes},
+        pattern = config.filetypes,
         callback = function (ev)
             M.load_breakpoints(ev.match)
+        end
+    })
+
+    -- Update breakpoint locations whenever a file is updated
+    vim.api.nvim_create_autocmd("BufWritePost", {
+        pattern = {'*'},
+        callback = function (ev)
+            if vim.tbl_contains(config.filetypes, vim.bo.filetype) then
+                M.update_breakpoints(vim.bo.filetype)
+            end
         end
     })
 end

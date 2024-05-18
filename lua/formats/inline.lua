@@ -6,6 +6,10 @@ function M.load_breakpoints()
     -- No config file to load
 end
 
+function M.update_breakpoints()
+    -- No config file to update
+end
+
 function M.delete_all_breakpoints()
     local cmdstr = config.inline_cmds[vim.bo.filetype]
     if cmdstr then
