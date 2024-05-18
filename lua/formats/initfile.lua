@@ -102,7 +102,7 @@ end
 local function breakpoint_from_line(debugger_type, initfile_linenr, line)
     local lnum, file
     if debugger_type == "gdb" then
-        file = line:match("break ([^:]+):")
+        file = line:match("break%s+([^:]+):")
         if file == nil then
             return nil
         end
@@ -116,8 +116,13 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
         lnum = line:match(" --line ([^ ]+)")
 
     elseif debugger_type == "delve" then
-        -- TODO
-        return nil
+        file = line:match("break%s+[a-zA-Z0-9]+%s+([^:]+):")
+
+        if file == nil then
+            return nil
+        end
+        lnum = line:match(":(%d+)")
+
     else
         error("Unknown debugger file format: '" .. debugger_type .. "'")
         return

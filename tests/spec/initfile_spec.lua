@@ -15,16 +15,18 @@ describe("lldb/gdb breakpoints:", function()
 
         test_util.rm_f('./.lldbinit')
         test_util.rm_f('./.gdbinit')
-
-        vim.cmd[[edit tests/files/c/main.c]]
+        test_util.rm_f('./.dlvinit')
     end)
 
     after_each(function()
         test_util.rm_f('./.lldbinit')
         test_util.rm_f('./.gdbinit')
+        test_util.rm_f('./.dlvinit')
     end)
 
     it("Toggle a lldb breakpoint", function()
+        vim.cmd[[edit tests/files/c/main.c]]
+
         -- Add breakpoint
         initfile.toggle_breakpoint(DebuggerType.LLDB, 9)
 
@@ -41,6 +43,8 @@ describe("lldb/gdb breakpoints:", function()
     end)
 
     it("Toggle a gdb breakpoint", function()
+        vim.cmd[[edit tests/files/c/main.c]]
+
         -- Add breakpoint
         initfile.toggle_breakpoint(DebuggerType.GDB, 7)
 
@@ -54,5 +58,23 @@ describe("lldb/gdb breakpoints:", function()
         content = util.readfile('.gdbinit')
         assert.equals("", content)
         assert(not test_util.sign_exists('brk', 7), 'sign still placed at line 7')
+    end)
+
+    it("Toggle a delve breakpoint", function()
+        vim.cmd[[edit tests/files/go/main.go]]
+
+        -- Add breakpoint
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+
+        local content = util.readfile('.dlvinit')
+        assert.equals("break testsfilesgomaingo22 tests/files/go/main.go:22\n" .. "continue\n", content)
+        assert(test_util.sign_exists('brk', 22), 'no sign placed at line 22')
+
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+
+        content = util.readfile('.dlvinit')
+        assert.equals("", content)
+        assert(not test_util.sign_exists('brk', 22), 'sign still placed at line 22')
     end)
 end)
