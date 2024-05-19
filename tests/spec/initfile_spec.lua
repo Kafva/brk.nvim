@@ -7,7 +7,7 @@ local util = require "util"
 local test_util = require "tests.test_util"
 
 --- Tests are not ran in parallel
-describe("Debugger initfile breakpoints:", function()
+describe("Initfile breakpoints:", function()
     before_each(function()
         initfile.delete_all_breakpoints('lldb')
         initfile.delete_all_breakpoints('gdb')
@@ -91,8 +91,56 @@ describe("Debugger initfile breakpoints:", function()
         vim.cmd[[write]]
 
         -- Breakpoint should now be at line 26
-        local content = util.readfile('.dlvinit')
+        content = util.readfile('.dlvinit')
         assert.equals("break testsfilesgomaingo26 tests/files/go/main.go:26\n" .. "continue\n", content)
         assert(test_util.sign_exists('brk', 26), 'no sign placed at line 26')
+    end)
+
+
+    it("Breakpoints are moved when sign placement changes in two buffers", function()
+        vim.cmd[[edit tests/files/go/main.go]]
+        vim.cmd[[edit tests/files/go/util.go]]
+
+        -- Add breakpoints
+        vim.cmd[[b tests/files/go/main.go]]
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+        vim.cmd[[b tests/files/go/util.go]]
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 13)
+
+
+        local content = util.readfile('.dlvinit')
+        assert.equals("break testsfilesgomaingo22 tests/files/go/main.go:22\n" ..
+                      "break testsfilesgoutilgo13 tests/files/go/util.go:13\n" ..
+                      "continue\n", content)
+
+        vim.cmd[[b tests/files/go/main.go]]
+        assert(test_util.sign_exists('brk', 22), 'no sign placed at line 22')
+        vim.cmd[[b tests/files/go/util.go]]
+        assert(test_util.sign_exists('brk', 13), 'no sign placed at line 13')
+
+        -- Insert some more content before line 22
+        vim.cmd[[b tests/files/go/main.go]]
+        vim.api.nvim_buf_set_lines(0, 21, 21, false, { "// line1",
+                                                       "// line2",
+                                                       "// line3",
+                                                       "// line4" })
+        -- Insert some more content before line 13
+        vim.cmd[[b tests/files/go/util.go]]
+        vim.api.nvim_buf_set_lines(0, 12, 12, false, { "// line1",
+                                                       "// line2",
+                                                       "// line3",
+                                                       "// line4" })
+        vim.cmd[[wa]]
+
+        -- Breakpoint should now be at lines 26 and 17
+        content = util.readfile('.dlvinit')
+        assert.equals("break testsfilesgomaingo26 tests/files/go/main.go:26\n" ..
+                      "break testsfilesgoutilgo17 tests/files/go/util.go:17\n" ..
+                      "continue\n", content)
+
+        vim.cmd[[b tests/files/go/main.go]]
+        assert(test_util.sign_exists('brk', 26), 'no sign placed at line 26')
+        vim.cmd[[b tests/files/go/util.go]]
+        assert(test_util.sign_exists('brk', 17), 'no sign placed at line 17')
     end)
 end)

@@ -4,7 +4,7 @@ local config = require 'config'
 local assert = require 'luassert.assert'
 local inline = require "formats.inline"
 
-describe("Script breakpoints:", function()
+describe("Inline breakpoints:", function()
     before_each(function()
         inline.delete_all_breakpoints()
     end)

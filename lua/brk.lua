@@ -79,7 +79,7 @@ function M.setup(user_opts)
     -- Update breakpoint locations whenever a file is updated
     vim.api.nvim_create_autocmd("BufWritePost", {
         pattern = {'*'},
-        callback = function (ev)
+        callback = function ()
             if vim.tbl_contains(config.filetypes, vim.bo.filetype) then
                 M.update_breakpoints(vim.bo.filetype)
             end
