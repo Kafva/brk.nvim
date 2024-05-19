@@ -22,7 +22,9 @@ func main() {
     if len(os.Args) > 1 && os.Args[1] == "-h" {
         flag.Usage()
     } else {
+        value2 := foo()
         log.Printf("%d: %+v\n", value, os.Args)
+        log.Printf("%d: %+v\n", value2, os.Args)
     }
 
 }
