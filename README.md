@@ -49,3 +49,11 @@ To run unit tests
 ```bash
 ./check.sh
 ```
+
+## Tips
+
+```bash
+# Debug a go program in the foreground (e.g. lf) and attach to it
+dlv debug --continue --headless --accept-multiclient --listen 127.0.0.1:4777
+dlv connect 127.0.0.1:4777
+```
