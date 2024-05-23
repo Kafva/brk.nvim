@@ -2,8 +2,8 @@
 require 'brk'.setup()
 
 local assert = require 'luassert.assert'
-local initfile = require "formats.initfile"
-local util = require "util"
+local initfile = require "brk.formats.initfile"
+local util = require "brk.util"
 local test_util = require "tests.test_util"
 
 --- Tests are not ran in parallel

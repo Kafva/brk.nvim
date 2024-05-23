@@ -19,6 +19,10 @@ func main() {
         flag.PrintDefaults()
     }
 
+// line1
+// line2
+// line3
+// line4
     if len(os.Args) > 1 && os.Args[1] == "-h" {
         flag.Usage()
     } else {

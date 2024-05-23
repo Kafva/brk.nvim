@@ -1,8 +1,8 @@
 require 'brk'.setup()
-local config = require 'config'
+local config = require 'brk.config'
 
 local assert = require 'luassert.assert'
-local inline = require "formats.inline"
+local inline = require "brk.formats.inline"
 
 describe("Inline breakpoints:", function()
     before_each(function()

@@ -1,5 +1,5 @@
-local util = require('util')
-local config = require('config')
+local util = require 'brk.util'
+local config = require 'brk.config'
 ---@type uv
 local uv = vim.uv
 

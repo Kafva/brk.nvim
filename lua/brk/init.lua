@@ -1,6 +1,6 @@
-local config = require 'config'
-local initfile = require 'formats.initfile'
-local inline = require 'formats.inline'
+local config = require 'brk.config'
+local initfile = require 'brk.formats.initfile'
+local inline = require 'brk.formats.inline'
 
 local M = {}
 
