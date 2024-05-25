@@ -40,9 +40,17 @@ end
 --- Update the breakpoints listed in the init file for the debugger
 ---@param debugger_type DebuggerType
 local function write_breakpoints_to_file(debugger_type)
+    local initfile_path = config.initfile_paths[debugger_type]
     local content = ""
     for _,breakpoint in pairs(breakpoints) do
         content = content .. breakpoint_tostring(debugger_type, breakpoint)
+    end
+
+    local ok, _ = uv.fs_access(initfile_path, 'r')
+
+    if #content == 0 and not ok then
+        -- Do not create an empty init file unless an initfile already exists
+        return
     end
 
     if #content > 0 and config.auto_start then
@@ -54,7 +62,7 @@ local function write_breakpoints_to_file(debugger_type)
     end
 
     -- Overwrite the lldb file with the new set of breakpoints
-    util.writefile(config.initfile_paths[debugger_type], 'w', content)
+    util.writefile(initfile_path, 'w', content)
 end
 
 local function reload_breakpoint_signs()
