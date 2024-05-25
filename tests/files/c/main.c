@@ -1,3 +1,4 @@
+// cc -O0 -g main.c && gdb a.out
 #include <stdio.h>
 
 int main(int argc, char *argv[], char *envp[]) {
