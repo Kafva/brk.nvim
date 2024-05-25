@@ -14,20 +14,26 @@ M = {}
 ---@type Breakpoint[]
 local breakpoints = {}
 
+-- A non-ambiguous filepath is needed for delve
+-- gdb does not like leading './'
+---@param debugger_type DebuggerType
 ---@param file string
-local function get_filepath(file)
-    return (vim.startswith(file, "/") or
-            vim.startswith(file, "./")) and file or "./" .. file
+local function get_filepath(debugger_type, file)
+    if debugger_type == DebuggerType.DELVE then
+        return (vim.startswith(file, "/") or
+                vim.startswith(file, "./")) and file or "./" .. file
+    else
+        return file
+    end
 end
 
 ---@param debugger_type DebuggerType
 ---@param breakpoint Breakpoint
 ---@return string
 local function breakpoint_tostring(debugger_type, breakpoint)
-    -- Use a non-ambiguous filepath
-    local filepath = get_filepath(breakpoint.file)
+    local filepath = get_filepath(debugger_type, breakpoint.file)
 
-    if debugger_type == "gdb" then
+    if debugger_type == DebuggerType.GDB then
         local condition = breakpoint.condition ~= nil and
                             " if " .. breakpoint.condition or
                             ""
@@ -35,7 +41,7 @@ local function breakpoint_tostring(debugger_type, breakpoint)
                 filepath .. ":" .. tostring(breakpoint.lnum) ..
                 condition ..
                "\n"
-    elseif debugger_type == "lldb" then
+    elseif debugger_type == DebuggerType.LLDB then
         local condition = breakpoint.condition ~= nil and
                             " --condition " .. breakpoint.condition or
                             ""
@@ -45,7 +51,7 @@ local function breakpoint_tostring(debugger_type, breakpoint)
                " --line " .. tostring(breakpoint.lnum) ..
                condition ..
                "\n"
-    elseif debugger_type == "delve" then
+    elseif debugger_type == DebuggerType.DELVE then
         local breakpoint_name = breakpoint.file:gsub('[^a-zA-Z0-9]', '') ..
                                                tostring(breakpoint.lnum)
         local condition = breakpoint.condition ~= nil and
@@ -91,7 +97,8 @@ local function write_breakpoints_to_file(debugger_type)
     util.writefile(initfile_path, 'w', content)
 end
 
-local function reload_breakpoint_signs()
+---@param debugger_type DebuggerType
+local function reload_breakpoint_signs(debugger_type)
     local buf = vim.api.nvim_get_current_buf()
 
     -- Unplace all signs in the current buffer first
@@ -100,7 +107,7 @@ local function reload_breakpoint_signs()
     for _,breakpoint in pairs(breakpoints) do
         local file = breakpoint.file
         local lnum = breakpoint.lnum
-        if get_filepath(vim.fn.expand'%') == file then
+        if get_filepath(debugger_type, vim.fn.expand'%') == file then
             local sign_name = breakpoint.condition ~= nil and
                                 "BrkConditionalBreakpoint" or
                                 "BrkBreakpoint"
@@ -297,13 +304,13 @@ function M.load_breakpoints(debugger_type)
         combine_delve_breakpoints()
     end
 
-    reload_breakpoint_signs()
+    reload_breakpoint_signs(debugger_type)
 end
 
 ---@param debugger_type DebuggerType
 function M.update_breakpoints(debugger_type)
     local buf = vim.api.nvim_get_current_buf()
-    local file = get_filepath(vim.fn.expand'%')
+    local file = get_filepath(debugger_type, vim.fn.expand'%')
 
     -- Determine where signs are currently placed
     local bufsigns = vim.fn.sign_getplaced(buf, { group = 'brk' })
@@ -324,7 +331,7 @@ function M.update_breakpoints(debugger_type)
     end
 
     write_breakpoints_to_file(debugger_type)
-    reload_breakpoint_signs()
+    reload_breakpoint_signs(debugger_type)
 end
 
 ---@param debugger_type DebuggerType
@@ -333,7 +340,7 @@ function M.delete_all_breakpoints(debugger_type)
     breakpoints = {}
 
     write_breakpoints_to_file(debugger_type)
-    reload_breakpoint_signs()
+    reload_breakpoint_signs(debugger_type)
 end
 
 ---@param debugger_type DebuggerType
@@ -344,7 +351,7 @@ function M.toggle_breakpoint(debugger_type, lnum)
     local bufsigns = vim.fn.sign_getplaced(buf, {group='brk',
                                                  lnum = tostring(lnum)})
     local breakpoint = {
-        file = get_filepath(vim.fn.expand'%'),
+        file = get_filepath(debugger_type, vim.fn.expand'%'),
         lnum = lnum
     }
 
@@ -364,7 +371,7 @@ end
 ---@param user_condition string?
 function M.toggle_breakpoint_conditional(debugger_type, lnum, user_condition)
     local breakpoint = {
-        file = get_filepath(vim.fn.expand'%'),
+        file = get_filepath(debugger_type, vim.fn.expand'%'),
         lnum = lnum
     }
 
