@@ -51,5 +51,4 @@ function M.toggle_breakpoint(filetype, lnum)
     vim.cmd "normal! k"
 end
 
-
 return M

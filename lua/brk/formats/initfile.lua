@@ -6,6 +6,8 @@ local uv = vim.uv
 ---@class Breakpoint
 ---@field file string
 ---@field lnum number
+---@field name string?
+---@field condition string?
 
 M = {}
 
@@ -17,21 +19,36 @@ local breakpoints = {}
 ---@return string
 local function breakpoint_tostring(debugger_type, breakpoint)
     if debugger_type == "gdb" then
+        local condition = breakpoint.condition ~= nil and
+                            " if " .. breakpoint.condition or
+                            ""
         return "break " ..
                 breakpoint.file .. ":" .. tostring(breakpoint.lnum) ..
+                condition ..
                "\n"
     elseif debugger_type == "lldb" then
+        local condition = breakpoint.condition ~= nil and
+                            " --condition " .. breakpoint.condition or
+                            ""
+
         return "breakpoint set" ..
                " --file " .. breakpoint.file ..
                " --line " .. tostring(breakpoint.lnum) ..
+               condition ..
                "\n"
     elseif debugger_type == "delve" then
         local breakpoint_name = breakpoint.file:gsub('[^a-zA-Z0-9]', '') ..
                                                tostring(breakpoint.lnum)
+        local condition = breakpoint.condition ~= nil and
+                            "cond " .. breakpoint_name .. " " ..
+                            breakpoint.condition .. "\n" or
+                            ""
         return "break " ..
                breakpoint_name .. " " ..
                breakpoint.file .. ":" .. tostring(breakpoint.lnum) ..
-               "\n"
+               "\n" ..
+               condition
+
     else
         error("Unknown debugger type: " .. debugger_type)
     end
@@ -75,9 +92,12 @@ local function reload_breakpoint_signs()
         local file = breakpoint.file
         local lnum = breakpoint.lnum
         if vim.fn.expand'%' == file then
+            local sign_name = breakpoint.condition ~= nil and
+                                "BrkConditionalBreakpoint" or
+                                "BrkBreakpoint"
             vim.notify("Placing sign at " .. file .. ":" .. tostring(lnum),
                        vim.log.levels.DEBUG)
-            vim.fn.sign_place(0, "brk", "BrkBreakpoint", buf, {
+            vim.fn.sign_place(0, "brk", sign_name, buf, {
                 lnum = lnum,
                 priority = config.breakpoint_sign_priority
             })
@@ -85,6 +105,7 @@ local function reload_breakpoint_signs()
     end
 end
 
+--- XXX does not consider the condition field
 ---@param b1 Breakpoint
 ---@param b2 Breakpoint
 local function breakpoint_eq(b1, b2)
@@ -92,14 +113,14 @@ local function breakpoint_eq(b1, b2)
 end
 
 ---@param predicate Breakpoint
----@return boolean
-local function breakpoint_exists(predicate)
+---@return Breakpoint?
+local function find_breakpoint(predicate)
     for _, breakpoint in pairs(breakpoints) do
         if breakpoint_eq(breakpoint, predicate) then
-            return true
+            return breakpoint
         end
     end
-    return false
+    return nil
 end
 
 -- Returns nil if the line is not a breakpoint
@@ -108,13 +129,14 @@ end
 ---@param line string
 ---@return Breakpoint|nil
 local function breakpoint_from_line(debugger_type, initfile_linenr, line)
-    local lnum, file
+    local lnum, file, name, condition
     if debugger_type == "gdb" then
         file = line:match("break%s+([^:]+):")
         if file == nil then
             return nil
         end
         lnum = line:match(":(%d+)")
+        condition = line:match(" if (.+)")
 
     elseif debugger_type == "lldb" then
         file = line:match(" --file ([^ ]+)")
@@ -122,31 +144,108 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
             return nil
         end
         lnum = line:match(" --line ([^ ]+)")
+        condition = line:match(" --condition (.+)")
 
     elseif debugger_type == "delve" then
         file = line:match("break%s+[a-zA-Z0-9]+%s+([^:]+):")
+        name = line:match("break%s+([a-zA-Z0-9]+)")
 
         if file == nil then
-            return nil
+            -- Parse as a conditional line
+            name = line:match("cond%s+([a-zA-Z0-9]+)")
+            condition = line:match("cond%s+[a-zA-Z0-9]+(.*)")
+            if name == nil then
+                return nil
+            end
+        else
+            -- Parse as a regular 'break' line
+            lnum = line:match(":(%d+)")
         end
-        lnum = line:match(":(%d+)")
 
     else
         error("Unknown debugger file format: '" .. debugger_type .. "'")
         return
     end
 
-    file = file:gsub('"', '')
-    _, lnum = pcall(tonumber, lnum)
-    if not lnum then
-        vim.notify("Failed to parse line " ..
-              tostring(initfile_linenr) .. " in " ..
-              config.initfile_paths[debugger_type],
-              vim.log.levels.ERROR)
-        return nil
+    if file then
+        file = file:gsub('"', '')
     end
 
-    return { file = file, lnum = lnum }
+    if lnum then
+        _, lnum = pcall(tonumber, lnum)
+        if not lnum then
+            vim.notify("Failed to parse line " ..
+                  tostring(initfile_linenr) .. " in " ..
+                  config.initfile_paths[debugger_type],
+                  vim.log.levels.ERROR)
+            return nil
+        end
+    end
+
+    return { file = file, lnum = lnum, name = name, condition = condition }
+end
+
+-- Delve breakpoints are parsed from two lines.
+-- Combine all breakpoints that exist with the same name into one,
+-- one of them has the lnum, the other has the conditional.
+local function combine_delve_breakpoints()
+    local combined_breakpoints = {}
+    for _,breakpoint in pairs(breakpoints) do
+        local old_value = combined_breakpoints[breakpoint.name]
+        if old_value ~= nil then
+            combined_breakpoints[breakpoint.name].lnum = old_value.lnum or breakpoint.lnum
+            combined_breakpoints[breakpoint.name].condition = old_value.condition or breakpoint.condition
+        else
+            combined_breakpoints[breakpoint.name] = breakpoint
+        end
+    end
+    breakpoints = {}
+    for _,v in pairs(combined_breakpoints) do
+        table.insert(breakpoints, v)
+    end
+end
+
+---@param breakpoint Breakpoint
+local function add_breakpoint(breakpoint)
+    if find_breakpoint(breakpoint) ~= nil then
+        vim.notify("Breakpoint already registered: " ..
+                   breakpoint.file .. ":" .. tostring(breakpoint.lnum),
+                   vim.log.levels.ERROR)
+        return
+    end
+
+    -- Add breakpoint sign at current line
+    local sign_name = breakpoint.condition ~= nil and
+                        "BrkConditionalBreakpoint" or
+                        "BrkBreakpoint"
+    local buf = vim.api.nvim_get_current_buf()
+    vim.fn.sign_place(0, "brk", sign_name, buf, {
+        lnum = breakpoint.lnum,
+        priority = config.breakpoint_sign_priority})
+
+    -- Add breakpoint to breakpoints list
+    table.insert(breakpoints, breakpoint)
+end
+
+---@param bufsigns table
+---@param breakpoint Breakpoint
+local function delete_breakpoint(bufsigns, breakpoint)
+    if find_breakpoint(breakpoint) == nil then
+        vim.notify("Breakpoint not registered: " ..
+                   breakpoint.file .. ":" .. tostring(breakpoint.lnum),
+                   vim.log.levels.ERROR)
+        return
+    end
+
+    -- Remove breakpoint sign at current line
+    for _, sign in ipairs(bufsigns[1].signs) do
+        vim.fn.sign_unplace('brk', {id = sign.id})
+    end
+
+    -- Remove breakpoint from breakpoints list
+    breakpoints = vim.tbl_filter(function(b)
+        return not breakpoint_eq(b, breakpoint)
+    end, breakpoints)
 end
 
 ---@param filetype string
@@ -179,6 +278,10 @@ function M.load_breakpoints(debugger_type)
         end
     else
         breakpoints = {}
+    end
+
+    if debugger_type == DebuggerType.DELVE then
+        combine_delve_breakpoints()
     end
 
     reload_breakpoint_signs()
@@ -227,40 +330,52 @@ function M.toggle_breakpoint(debugger_type, lnum)
     ---@type table
     local bufsigns = vim.fn.sign_getplaced(buf, {group='brk',
                                                  lnum = tostring(lnum)})
-    local breakpoint = {file = vim.fn.expand'%', lnum = lnum}
+    local breakpoint = {
+        file = vim.fn.expand'%',
+        lnum = lnum
+    }
 
     if #bufsigns > 0 and #bufsigns[1].signs > 0 then
-        if not breakpoint_exists(breakpoint) then
-            vim.notify("Breakpoint not registered: " ..
-                       breakpoint.file .. ":" .. tostring(breakpoint.lnum),
-                       vim.log.levels.ERROR)
-            return
-        end
-
-        -- Remove breakpoint sign at current line
-        for _, sign in ipairs(bufsigns[1].signs) do
-            vim.fn.sign_unplace('brk', {id = sign.id})
-        end
-
-        -- Remove breakpoint from breakpoints list
-        breakpoints = vim.tbl_filter(function(b)
-            return not breakpoint_eq(b, breakpoint)
-        end, breakpoints)
+        -- Breakpoint already exists
+        delete_breakpoint(bufsigns, breakpoint)
     else
-        if breakpoint_exists(breakpoint) then
-            vim.notify("Breakpoint already registered: " ..
-                       breakpoint.file .. ":" .. tostring(breakpoint.lnum),
-                       vim.log.levels.ERROR)
-            return
+        -- Breakpoint does not exist yet
+        add_breakpoint(breakpoint)
+    end
+
+    write_breakpoints_to_file(debugger_type)
+end
+
+---@param debugger_type DebuggerType
+---@param lnum number
+---@param user_condition string?
+function M.toggle_breakpoint_conditional(debugger_type, lnum, user_condition)
+    local breakpoint = {
+        file = vim.fn.expand'%',
+        lnum = lnum
+    }
+
+    local current_breakpoint = find_breakpoint(breakpoint)
+    local current_condition = current_breakpoint and current_breakpoint.condition or ''
+    local condition = user_condition or vim.fn.input('Conditional: ', current_condition)
+    local buf = vim.api.nvim_get_current_buf()
+    local bufsigns = vim.fn.sign_getplaced(buf, {group='brk',
+                                                 lnum = tostring(lnum)})
+
+    if current_breakpoint and (condition == nil or #condition == 0) then
+        -- Delete the conditional if everything from the prompt was removed
+        delete_breakpoint(bufsigns, breakpoint)
+
+    elseif condition == current_condition then
+        -- No input, nothing to do
+        return
+    else
+        if current_breakpoint ~= nil then
+            delete_breakpoint(bufsigns, current_breakpoint)
         end
 
-        -- Add breakpoint sign at current line
-        vim.fn.sign_place(0, "brk", "BrkBreakpoint", buf, {
-            lnum = lnum,
-            priority = config.breakpoint_sign_priority})
-
-        -- Add breakpoint to breakpoints list
-        table.insert(breakpoints, breakpoint)
+        breakpoint.condition = condition
+        add_breakpoint(breakpoint)
     end
 
     write_breakpoints_to_file(debugger_type)

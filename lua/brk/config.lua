@@ -13,7 +13,9 @@ DebuggerType = {
 ---@field auto_start? boolean Write an init file that automatically starts the debugger
 ---@field preferred_debugger_format? DebuggerType
 ---@field breakpoint_sign? string
+---@field conditional_breakpoint_sign? string
 ---@field breakpoint_color? string
+---@field conditional_breakpoint_color? string
 ---@field initfile_paths? table<DebuggerType, string>
 ---@field initfile_filetypes? string[]
 ---@field inline_cmds? table<string, string>
@@ -23,9 +25,11 @@ DebuggerType = {
 M.default_opts = {
     default_bindings = true,
     auto_start = true,
-    breakpoint_sign = '󰝥 ',
     breakpoint_sign_priority = 90,
+    breakpoint_sign = '󰝥 ',
+    conditional_breakpoint_sign = '󰝥 ',
     breakpoint_color = 'Error',
+    conditional_breakpoint_color = 'Comment',
 
     preferred_debugger_format = DebuggerType.LLDB,
     initfile_paths = {
@@ -62,8 +66,15 @@ function M.setup(user_opts)
                                          numhl='',
                                          linehl='',
                                          texthl=opts.breakpoint_color})
+    vim.fn.sign_define('BrkConditionalBreakpoint',
+                                        {text=opts.conditional_breakpoint_sign,
+                                         numhl='',
+                                         linehl='',
+                                         texthl=opts.conditional_breakpoint_color})
     if opts and opts.default_bindings then
         vim.keymap.set({"n", "i"}, "<F9>", require'brk'.toggle_breakpoint, {})
+        vim.keymap.set("n", "db", require'brk'.toggle_breakpoint, {})
+        vim.keymap.set("n", "dc", require'brk'.toggle_breakpoint_conditional, {})
     end
 
     vim.api.nvim_create_user_command("BrkClear", require'brk'.delete_all_breakpoints, {})

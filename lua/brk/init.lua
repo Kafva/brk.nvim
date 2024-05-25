@@ -47,6 +47,7 @@ function M.delete_all_breakpoints()
     end
 end
 
+---@param user_lnum number
 function M.toggle_breakpoint(user_lnum)
     local lnum = user_lnum or vim.fn.line('.')
     local filetype = vim.bo.filetype
@@ -60,6 +61,22 @@ function M.toggle_breakpoint(user_lnum)
 
     else
         vim.notify("No breakpoint support for filetype: '" .. filetype .. "'",
+                   vim.log.levels.WARN)
+    end
+end
+
+---@param user_lnum number
+---@param user_condition string?
+function M.toggle_breakpoint_conditional(user_lnum, user_condition)
+    local lnum = user_lnum or vim.fn.line('.')
+    local filetype = vim.bo.filetype
+
+    if vim.tbl_contains(config.initfile_filetypes, filetype) then
+        local debugger_type = initfile.get_debugger_type(filetype)
+        initfile.toggle_breakpoint_conditional(debugger_type, lnum, user_condition)
+
+    else
+        vim.notify("No conditional breakpoint support for filetype: '" .. filetype .. "'",
                    vim.log.levels.WARN)
     end
 end

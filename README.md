@@ -1,8 +1,7 @@
 # brk.nvim
-Neovim plugin for basic management of debugger breakpoints. The plugin
-provides an easy way to toggle breakpoints inside nvim (mapped to `<F9>` by
-default) which automatically updates the debugger init file (`.lldbinit` etc.) with
-matching breakpoints.
+Neovim plugin for basic management of debugger breakpoints. The plugin provides
+an easy way to toggle breakpoints inside nvim which automatically updates the
+debugger init file (`.lldbinit` etc.) with matching breakpoints.
 
 If you want a fully integrated debugger inside nvim, this plugin is not for you,
 consider [nvim-dap](https://github.com/mfussenegger/nvim-dap). The upside of
@@ -20,7 +19,8 @@ explicitly provide one, brk.nvim uses .dlvinit by default
 (cd tests/files/go && dlv debug --init .dlvinit)
 ```
 
-The `<F9>` mapping is also setup to insert inline breakpoints for debuggers in the following languages:
+The toggle breakpoint function is also setup to insert inline breakpoints for
+debuggers in the following languages:
 
 * [pdb](https://docs.python.org/3/library/pdb.html) for Python
 * [kafva/debugger.lua](https://github.com/kafva/debugger.lua) for Lua
@@ -29,12 +29,16 @@ The `<F9>` mapping is also setup to insert inline breakpoints for debuggers in t
 ```lua
 -- Basic configuration, see lua/config.lua for more options
 require 'brk'.setup {
-    -- Enable <F9> as shortcut for toggling breakpoints
+    -- Enable default mappings:
+    --  Toggle breakpoint: <F9> or 'db'
+    --  Insert/Edit/Delete conditional breakpoint: 'dc'
     default_bindings = true,
     -- Insert 'run' command at the end of the init file automatically
     auto_start = true,
     breakpoint_sign = '󰝥 ',
+    conditional_breakpoint_sign = '󰝥 ',
     breakpoint_color = 'Error',
+    conditional_breakpoint_color = 'Comment',
 
     -- Preferred debugger when no init file exists
     preferred_debugger_format = "lldb",

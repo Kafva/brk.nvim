@@ -73,6 +73,46 @@ describe("Initfile breakpoints:", function()
         assert(not test_util.sign_exists('brk', 22), 'sign still placed at line 22')
     end)
 
+    it("Toggle a conditional lldb breakpoint", function()
+        vim.cmd[[edit tests/files/c/main.c]]
+
+        -- Add breakpoint
+        initfile.toggle_breakpoint_conditional(DebuggerType.LLDB, 6, 'i == 2')
+
+        local content = util.readfile('.lldbinit')
+        assert.equals("breakpoint set --file tests/files/c/main.c --line 6 " ..
+                      "--condition i == 2\n" ..
+                      "run\n", content)
+        assert(test_util.sign_exists('brk', 6), 'no sign placed at line 6')
+
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.LLDB, 6)
+
+        content = util.readfile('.lldbinit')
+        assert.equals("", content)
+        assert(not test_util.sign_exists('brk', 6), 'sign still placed at line 6')
+    end)
+
+    it("Toggle a conditional delve breakpoint", function()
+        vim.cmd[[edit tests/files/go/main.go]]
+
+        -- Add breakpoint
+        initfile.toggle_breakpoint_conditional(DebuggerType.DELVE, 22, 'true')
+
+        local content = util.readfile('.dlvinit')
+        assert.equals("break testsfilesgomaingo22 tests/files/go/main.go:22\n" ..
+                      "cond testsfilesgomaingo22 true\n" ..
+                      "continue\n", content)
+        assert(test_util.sign_exists('brk', 22), 'no sign placed at line 22')
+
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+
+        content = util.readfile('.dlvinit')
+        assert.equals("", content)
+        assert(not test_util.sign_exists('brk', 22), 'sign still placed at line 22')
+    end)
+
     it("Breakpoints are moved when sign placement changes", function()
         vim.cmd[[edit tests/files/go/main.go]]
 
@@ -95,7 +135,6 @@ describe("Initfile breakpoints:", function()
         assert.equals("break testsfilesgomaingo26 tests/files/go/main.go:26\n" .. "continue\n", content)
         assert(test_util.sign_exists('brk', 26), 'no sign placed at line 26')
     end)
-
 
     it("Breakpoints are moved when sign placement changes in two buffers", function()
         vim.cmd[[edit tests/files/go/main.go]]
