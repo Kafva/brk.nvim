@@ -93,6 +93,25 @@ describe("Initfile breakpoints:", function()
         assert(not test_util.sign_exists('brk', 6), 'sign still placed at line 6')
     end)
 
+    it("Toggle a conditional gdb breakpoint", function()
+        vim.cmd[[edit ./tests/files/c/main.c]]
+
+        -- Add breakpoint
+        initfile.toggle_breakpoint_conditional(DebuggerType.GDB, 6, 'i == 3')
+
+        local content = util.readfile('.gdbinit')
+        assert.equals("break ./tests/files/c/main.c:6 if i == 3\n" .. 
+                      "run\n", content)
+        assert(test_util.sign_exists('brk', 6), 'no sign placed at line 6')
+
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.GDB, 6)
+
+        content = util.readfile('.gdbinit')
+        assert.equals("", content)
+        assert(not test_util.sign_exists('brk', 6), 'sign still placed at line 6')
+    end)
+
     it("Toggle a conditional delve breakpoint", function()
         vim.cmd[[edit ./tests/files/go/main.go]]
 

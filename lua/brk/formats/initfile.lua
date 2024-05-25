@@ -16,7 +16,7 @@ local breakpoints = {}
 
 ---@param file string
 local function get_filepath(file)
-    return (vim.startswith(file, "/") or 
+    return (vim.startswith(file, "/") or
             vim.startswith(file, "./")) and file or "./" .. file
 end
 
