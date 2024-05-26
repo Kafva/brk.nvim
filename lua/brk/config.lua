@@ -37,6 +37,11 @@ M.default_opts = {
         [DebuggerType.GDB] = "./.gdbinit",
         [DebuggerType.DELVE] = "./.dlvinit",
     },
+    initfile_popover_filetype = {
+        [DebuggerType.LLDB] = '',
+        [DebuggerType.GDB] = 'gdb',
+        [DebuggerType.DELVE] = ''
+    },
     initfile_filetypes = {
         'c',
         'cpp',
@@ -74,7 +79,9 @@ function M.setup(user_opts)
     if opts and opts.default_bindings then
         vim.keymap.set({"n", "i"}, "<F9>", require'brk'.toggle_breakpoint, {})
         vim.keymap.set("n", "db", require'brk'.toggle_breakpoint, {})
-        vim.keymap.set("n", "dc", require'brk'.toggle_breakpoint_conditional, {})
+        vim.keymap.set("n", "dc", require'brk'.toggle_conditional_breakpoint, {})
+        vim.keymap.set("n", "ds", require'brk'.toggle_symbol_breakpoint, {})
+        vim.keymap.set("n", "dl", require'brk'.list_breakpoints, {})
     end
 
     vim.api.nvim_create_user_command("BrkClear", require'brk'.delete_all_breakpoints, {})

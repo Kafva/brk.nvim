@@ -32,6 +32,8 @@ require 'brk'.setup {
     -- Enable default mappings:
     --  Toggle breakpoint: <F9> or 'db'
     --  Insert/Edit/Delete conditional breakpoint: 'dc'
+    --  Insert/Delete symbol breakpoint: 'ds'
+    --  Show debugger initfile: 'dl'
     default_bindings = true,
     -- Insert 'run' command at the end of the init file automatically
     auto_start = true,
@@ -56,8 +58,15 @@ To run unit tests
 
 ## Tips
 
+### delve
 ```bash
 # Debug a go program in the foreground (e.g. lf) and attach to it
 dlv debug --continue --headless --accept-multiclient --listen 127.0.0.1:4777
 dlv connect 127.0.0.1:4777
+```
+
+### lldb
+```lldbinit
+# Show variables in frame
+frame variable
 ```

@@ -65,18 +65,44 @@ function M.toggle_breakpoint(user_lnum)
     end
 end
 
+---@param user_symbol string?
+function M.toggle_symbol_breakpoint(user_symbol)
+    local filetype = vim.bo.filetype
+
+    if vim.tbl_contains(config.initfile_filetypes, filetype) then
+        local debugger_type = initfile.get_debugger_type(filetype)
+        initfile.toggle_symbol_breakpoint(debugger_type, user_symbol)
+
+    else
+        vim.notify("No symbol breakpoint support for filetype: '" .. filetype .. "'",
+                   vim.log.levels.WARN)
+    end
+end
+
 ---@param user_lnum number
 ---@param user_condition string?
-function M.toggle_breakpoint_conditional(user_lnum, user_condition)
+function M.toggle_conditional_breakpoint(user_lnum, user_condition)
     local lnum = user_lnum or vim.fn.line('.')
     local filetype = vim.bo.filetype
 
     if vim.tbl_contains(config.initfile_filetypes, filetype) then
         local debugger_type = initfile.get_debugger_type(filetype)
-        initfile.toggle_breakpoint_conditional(debugger_type, lnum, user_condition)
+        initfile.toggle_conditional_breakpoint(debugger_type, lnum, user_condition)
 
     else
         vim.notify("No conditional breakpoint support for filetype: '" .. filetype .. "'",
+                   vim.log.levels.WARN)
+    end
+end
+
+function M.list_breakpoints()
+    local filetype = vim.bo.filetype
+
+    if vim.tbl_contains(config.initfile_filetypes, filetype) then
+        local debugger_type = initfile.get_debugger_type(filetype)
+        initfile.list_breakpoints(debugger_type)
+    else
+        vim.notify("No support for filetype: '" .. filetype .. "'",
                    vim.log.levels.WARN)
     end
 end

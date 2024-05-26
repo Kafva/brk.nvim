@@ -77,7 +77,7 @@ describe("Initfile breakpoints:", function()
         vim.cmd[[edit tests/files/c/main.c]]
 
         -- Add breakpoint
-        initfile.toggle_breakpoint_conditional(DebuggerType.LLDB, 6, 'i == 2')
+        initfile.toggle_conditional_breakpoint(DebuggerType.LLDB, 6, 'i == 2')
 
         local content = util.readfile('.lldbinit')
         assert.equals("breakpoint set --file tests/files/c/main.c --line 6 " ..
@@ -97,10 +97,10 @@ describe("Initfile breakpoints:", function()
         vim.cmd[[edit tests/files/c/main.c]]
 
         -- Add breakpoint
-        initfile.toggle_breakpoint_conditional(DebuggerType.GDB, 6, 'i == 3')
+        initfile.toggle_conditional_breakpoint(DebuggerType.GDB, 6, 'i == 3')
 
         local content = util.readfile('.gdbinit')
-        assert.equals("break tests/files/c/main.c:6 if i == 3\n" .. 
+        assert.equals("break tests/files/c/main.c:6 if i == 3\n" ..
                       "run\n", content)
         assert(test_util.sign_exists('brk', 6), 'no sign placed at line 6')
 
@@ -116,7 +116,7 @@ describe("Initfile breakpoints:", function()
         vim.cmd[[edit tests/files/go/main.go]]
 
         -- Add breakpoint
-        initfile.toggle_breakpoint_conditional(DebuggerType.DELVE, 22, 'true')
+        initfile.toggle_conditional_breakpoint(DebuggerType.DELVE, 22, 'true')
 
         local content = util.readfile('.dlvinit')
         assert.equals("break testsfilesgomaingo22 ./tests/files/go/main.go:22\n" ..
