@@ -73,7 +73,7 @@ describe("Initfile breakpoints:", function()
         assert(not test_util.sign_exists('brk', 22), 'sign still placed at line 22')
     end)
 
-    it("Toggle a conditional lldb breakpoint", function()
+    it("Toggle a lldb conditional breakpoint", function()
         vim.cmd[[edit tests/files/c/main.c]]
 
         -- Add breakpoint
@@ -93,7 +93,7 @@ describe("Initfile breakpoints:", function()
         assert(not test_util.sign_exists('brk', 6), 'sign still placed at line 6')
     end)
 
-    it("Toggle a conditional gdb breakpoint", function()
+    it("Toggle a gdb conditional breakpoint", function()
         vim.cmd[[edit tests/files/c/main.c]]
 
         -- Add breakpoint
@@ -112,7 +112,7 @@ describe("Initfile breakpoints:", function()
         assert(not test_util.sign_exists('brk', 6), 'sign still placed at line 6')
     end)
 
-    it("Toggle a conditional delve breakpoint", function()
+    it("Toggle a delve conditional breakpoint", function()
         vim.cmd[[edit tests/files/go/main.go]]
 
         -- Add breakpoint
@@ -130,6 +130,26 @@ describe("Initfile breakpoints:", function()
         content = util.readfile('.dlvinit')
         assert.equals("", content)
         assert(not test_util.sign_exists('brk', 22), 'sign still placed at line 22')
+    end)
+
+    it("Toggle a lldb symbol breakpoint after adding regular breakpoints", function()
+        vim.cmd[[edit tests/files/c/main.c]]
+
+        -- Add regular breakpoints followed by a symbol breakpoint
+        initfile.toggle_breakpoint(DebuggerType.LLDB, 10)
+        initfile.toggle_symbol_breakpoint(DebuggerType.LLDB, 'printf')
+
+        local content = util.readfile('.lldbinit')
+        assert.equals("breakpoint set --file tests/files/c/main.c --line 10\n" ..
+                      "breakpoint set -n printf\n" ..
+                      "run\n", content)
+
+        -- Remove symbol breakpoint
+        initfile.toggle_symbol_breakpoint(DebuggerType.LLDB, 'printf')
+
+        content = util.readfile('.lldbinit')
+        assert.equals("breakpoint set --file tests/files/c/main.c --line 10\n" ..
+                      "run\n", content)
     end)
 
     it("Breakpoints are moved when sign placement changes", function()
@@ -153,6 +173,9 @@ describe("Initfile breakpoints:", function()
         content = util.readfile('.dlvinit')
         assert.equals("break testsfilesgomaingo26 ./tests/files/go/main.go:26\n" .. "continue\n", content)
         assert(test_util.sign_exists('brk', 26), 'no sign placed at line 26')
+
+        -- Cleanup on success
+        vim.system({"git", "checkout", "tests/files"})
     end)
 
     it("Breakpoints are moved when sign placement changes in two buffers", function()
@@ -200,5 +223,8 @@ describe("Initfile breakpoints:", function()
         assert(test_util.sign_exists('brk', 26), 'no sign placed at line 26')
         vim.cmd[[b tests/files/go/util.go]]
         assert(test_util.sign_exists('brk', 17), 'no sign placed at line 17')
+
+        -- Cleanup on success
+        vim.system({"git", "checkout", "tests/files"})
     end)
 end)
