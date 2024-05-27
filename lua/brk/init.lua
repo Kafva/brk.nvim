@@ -99,8 +99,7 @@ function M.list_breakpoints()
     local filetype = vim.bo.filetype
 
     if vim.tbl_contains(config.initfile_filetypes, filetype) then
-        local debugger_type = initfile.get_debugger_type(filetype)
-        initfile.list_breakpoints(debugger_type)
+        initfile.list_breakpoints()
     else
         vim.notify("No support for filetype: '" .. filetype .. "'",
                    vim.log.levels.WARN)

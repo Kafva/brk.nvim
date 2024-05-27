@@ -37,11 +37,6 @@ M.default_opts = {
         [DebuggerType.GDB] = "./.gdbinit",
         [DebuggerType.DELVE] = "./.dlvinit",
     },
-    initfile_popover_filetype = {
-        [DebuggerType.LLDB] = '',
-        [DebuggerType.GDB] = 'gdb',
-        [DebuggerType.DELVE] = ''
-    },
     initfile_filetypes = {
         'c',
         'cpp',

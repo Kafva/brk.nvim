@@ -132,7 +132,7 @@ describe("Initfile breakpoints:", function()
         assert(not test_util.sign_exists('brk', 22), 'sign still placed at line 22')
     end)
 
-    it("Toggle a lldb symbol breakpoint after adding regular breakpoints", function()
+    it("Toggle a lldb symbol breakpoint after adding a regular breakpoint", function()
         vim.cmd[[edit tests/files/c/main.c]]
 
         -- Add regular breakpoints followed by a symbol breakpoint

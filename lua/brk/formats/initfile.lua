@@ -338,6 +338,9 @@ end
 function M.load_breakpoints(debugger_type)
     local initfile_path = config.initfile_paths[debugger_type]
     local ok, _ = uv.fs_access(initfile_path, 'r')
+    -- Always reset before reloading
+    breakpoints = {}
+
     if ok then
         local content = util.readfile(initfile_path)
         for i,line in pairs(vim.split(content, '\n')) do
@@ -346,8 +349,6 @@ function M.load_breakpoints(debugger_type)
                 table.insert(breakpoints, breakpoint)
             end
         end
-    else
-        breakpoints = {}
     end
 
     if debugger_type == DebuggerType.DELVE then
@@ -473,24 +474,10 @@ function M.toggle_symbol_breakpoint(debugger_type, user_symbol)
     write_breakpoints_to_file(debugger_type)
 end
 
----@param debugger_type DebuggerType
-function M.list_breakpoints(debugger_type)
-    local initfile_path = config.initfile_paths[debugger_type]
-    local ok, _ = uv.fs_access(initfile_path, 'r')
-    if not ok then
-        vim.notify("Not found: '" .. initfile_path .. "'",
-                   vim.log.levels.WARN)
-        return
-    end
-
-    local ft = config.initfile_popover_filetype[debugger_type]
-    local content = util.readfile(initfile_path)
-    local lines = vim.tbl_flatten({
-        "# " .. initfile_path,
-        "",
-        vim.split(content, '\n'),
-    })
-    util.open_popover(lines, ft, 40, 20)
+function M.list_breakpoints()
+    local content = "breakpoints = " .. tostring(vim.inspect(breakpoints))
+    local lines = vim.split(content, '\n')
+    util.open_popover(lines, 'lua', 60, 30)
 end
 
 return M

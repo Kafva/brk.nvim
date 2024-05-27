@@ -33,7 +33,7 @@ require 'brk'.setup {
     --  Toggle breakpoint: <F9> or 'db'
     --  Insert/Edit/Delete conditional breakpoint: 'dc'
     --  Insert/Delete symbol breakpoint: 'ds'
-    --  Show debugger initfile: 'dl'
+    --  Show internal breakpoint list: 'dl'
     default_bindings = true,
     -- Insert 'run' command at the end of the init file automatically
     auto_start = true,
