@@ -475,7 +475,26 @@ function M.toggle_symbol_breakpoint(debugger_type, user_symbol)
 end
 
 function M.list_breakpoints()
-    local content = "breakpoints = " .. tostring(vim.inspect(breakpoints))
+    local content = "  " .. M.get_debugger_type(vim.bo.filetype) ..  "\n"
+    -- Sorted by breakpoint type
+    for _,b in pairs(breakpoints) do
+        if b.file ~= nil then
+            local location = b.file .. ":" .. tostring(b.lnum)
+            content = content ..  "  [X] " .. location .. "\n"
+        end
+    end
+    for _,b in pairs(breakpoints) do
+        if b.condition ~= nil then
+            local location = b.file .. ":" .. tostring(b.lnum)
+            content = content .. "  [C] " .. location .. " " .. b.condition .. "\n"
+        end
+    end
+    for _,b in pairs(breakpoints) do
+        if b.symbol ~= nil then
+            content = content .. "  [S] " .. b.symbol .. "\n"
+        end
+    end
+
     local lines = vim.split(content, '\n')
     util.open_popover(lines, 'lua', 60, 30)
 end

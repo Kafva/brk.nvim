@@ -227,4 +227,30 @@ describe("Initfile breakpoints:", function()
         -- Cleanup on success
         vim.system({"git", "checkout", "tests/files"})
     end)
+
+    it("Breakpoints are moved when sign placement changes in two buffers", function()
+        vim.cmd[[edit tests/files/go/main.go]]
+
+        -- Add breakpoints
+        vim.cmd[[b tests/files/go/main.go]]
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+
+
+        local content = util.readfile('.dlvinit')
+        assert.equals("break testsfilesgomaingo22 ./tests/files/go/main.go:22\n" ..
+                      "continue\n", content)
+
+        assert(test_util.sign_exists('brk', 22), 'no sign placed at line 22')
+
+        -- Delete line 22
+        vim.api.nvim_buf_set_lines(0, 21, 22, false, {})
+        vim.cmd[[wa]]
+
+        -- Breakpoint should be removed
+        content = util.readfile('.dlvinit')
+        assert.equals("", content)
+
+        -- Cleanup on success
+        vim.system({"git", "checkout", "tests/files"})
+    end)
 end)
