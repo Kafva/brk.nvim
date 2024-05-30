@@ -65,7 +65,7 @@ local function breakpoint_tostring(debugger_type, breakpoint)
                "\n"
     elseif debugger_type == DebuggerType.LLDB then
         local condition = breakpoint.condition ~= nil and
-                            " --condition " .. breakpoint.condition or
+                            " --condition '" .. breakpoint.condition .. "'" or
                             ""
 
         return "breakpoint set" ..
@@ -476,22 +476,26 @@ end
 
 function M.list_breakpoints()
     local content = "  " .. M.get_debugger_type(vim.bo.filetype) ..  "\n"
-    -- Sorted by breakpoint type
-    for _,b in pairs(breakpoints) do
-        if b.file ~= nil then
-            local location = b.file .. ":" .. tostring(b.lnum)
-            content = content ..  "  [X] " .. location .. "\n"
+    if #breakpoints == 0 then
+        content = content .. "  No breakpoints registered"
+    else
+        -- Sorted by breakpoint type
+        for _,b in pairs(breakpoints) do
+            if b.condition == nil and b.file ~= nil then
+                local location = b.file .. ":" .. tostring(b.lnum)
+                content = content ..  "  [X] " .. location .. "\n"
+            end
         end
-    end
-    for _,b in pairs(breakpoints) do
-        if b.condition ~= nil then
-            local location = b.file .. ":" .. tostring(b.lnum)
-            content = content .. "  [C] " .. location .. " " .. b.condition .. "\n"
+        for _,b in pairs(breakpoints) do
+            if b.condition ~= nil then
+                local location = b.file .. ":" .. tostring(b.lnum)
+                content = content .. "  [C] " .. location .. " " .. b.condition .. "\n"
+            end
         end
-    end
-    for _,b in pairs(breakpoints) do
-        if b.symbol ~= nil then
-            content = content .. "  [S] " .. b.symbol .. "\n"
+        for _,b in pairs(breakpoints) do
+            if b.symbol ~= nil then
+                content = content .. "  [S] " .. b.symbol .. "\n"
+            end
         end
     end
 
