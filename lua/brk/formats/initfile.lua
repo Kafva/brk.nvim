@@ -15,6 +15,16 @@ M = {}
 ---@type Breakpoint[]
 local breakpoints = {}
 
+-- Automatically save the current buffer before changing breakpoint placements
+local function save_buffer()
+    local ok, err = pcall(function() vim.api.nvim_command('w') end)
+    if not ok then
+        vim.notify("Error saving buffer: " .. tostring(err))
+        return false
+    end
+    return true
+end
+
 -- A non-ambiguous filepath is needed for delve
 -- gdb does not like leading './'
 ---@param debugger_type DebuggerType
@@ -360,6 +370,10 @@ end
 
 ---@param debugger_type DebuggerType
 function M.update_breakpoints(debugger_type)
+    if not save_buffer() then
+        return
+    end
+
     local buf = vim.api.nvim_get_current_buf()
     ---@diagnostic disable-next-line: param-type-mismatch
     local file = get_filepath(debugger_type, vim.fn.expand'%')
@@ -388,6 +402,9 @@ end
 
 ---@param debugger_type DebuggerType
 function M.delete_all_breakpoints(debugger_type)
+    if not save_buffer() then
+        return
+    end
     vim.fn.sign_unplace('brk')
     breakpoints = {}
 
@@ -398,6 +415,9 @@ end
 ---@param debugger_type DebuggerType
 ---@param lnum number
 function M.toggle_breakpoint(debugger_type, lnum)
+    if not save_buffer() then
+        return
+    end
     local buf = vim.api.nvim_get_current_buf()
     ---@type table
     local bufsigns = vim.fn.sign_getplaced(buf, {group='brk',
@@ -423,6 +443,9 @@ end
 ---@param lnum number
 ---@param user_condition string?
 function M.toggle_conditional_breakpoint(debugger_type, lnum, user_condition)
+    if not save_buffer() then
+        return
+    end
     local breakpoint = {
         ---@diagnostic disable-next-line: param-type-mismatch
         file = get_filepath(debugger_type, vim.fn.expand'%'),
@@ -458,6 +481,9 @@ end
 ---@param debugger_type DebuggerType
 ---@param user_symbol string?
 function M.toggle_symbol_breakpoint(debugger_type, user_symbol)
+    if not save_buffer() then
+        return
+    end
     local symbol = user_symbol or vim.fn.input('Toggle symbol breakpoint: ')
     local breakpoint = { symbol = symbol }
 
