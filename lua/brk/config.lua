@@ -77,9 +77,9 @@ function M.setup(user_opts)
         vim.keymap.set("n", "dc", require'brk'.toggle_conditional_breakpoint, {})
         vim.keymap.set("n", "ds", require'brk'.toggle_symbol_breakpoint, {})
         vim.keymap.set("n", "dl", require'brk'.list_breakpoints, {})
+        vim.keymap.set("n", "dC", require'brk'.delete_all_breakpoints, {})
     end
 
-    vim.api.nvim_create_user_command("BrkClear", require'brk'.delete_all_breakpoints, {})
     vim.api.nvim_create_user_command("BrkReload", function()
        require'brk'.load_breakpoints(vim.bo.filetype)
     end, {})

@@ -17,7 +17,7 @@ local breakpoints = {}
 
 -- Automatically save the current buffer before changing breakpoint placements
 local function save_buffer()
-    local ok, err = pcall(function() vim.api.nvim_command('w') end)
+    local ok, err = pcall(function() vim.cmd("silent write") end)
     if not ok then
         vim.notify("Error saving buffer: " .. tostring(err))
         return false
@@ -148,7 +148,7 @@ local function reload_breakpoint_signs(debugger_type)
                                 "BrkConditionalBreakpoint" or
                                 "BrkBreakpoint"
             vim.notify("Placing sign at " .. file .. ":" .. tostring(lnum),
-                       vim.log.levels.DEBUG)
+                       vim.log.levels.TRACE)
             vim.fn.sign_place(0, "brk", sign_name, buf, {
                 lnum = lnum,
                 priority = config.breakpoint_sign_priority
@@ -370,10 +370,6 @@ end
 
 ---@param debugger_type DebuggerType
 function M.update_breakpoints(debugger_type)
-    if not save_buffer() then
-        return
-    end
-
     local buf = vim.api.nvim_get_current_buf()
     ---@diagnostic disable-next-line: param-type-mismatch
     local file = get_filepath(debugger_type, vim.fn.expand'%')
@@ -402,9 +398,6 @@ end
 
 ---@param debugger_type DebuggerType
 function M.delete_all_breakpoints(debugger_type)
-    if not save_buffer() then
-        return
-    end
     vim.fn.sign_unplace('brk')
     breakpoints = {}
 

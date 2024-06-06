@@ -34,6 +34,7 @@ require 'brk'.setup {
     --  Insert/Edit/Delete conditional breakpoint: 'dc'
     --  Insert/Delete symbol breakpoint: 'ds'
     --  Show internal breakpoint list: 'dl'
+    --  Delete all breakpoints: 'dC'
     default_bindings = true,
     -- Insert 'run' command at the end of the init file automatically
     auto_start = true,
@@ -48,10 +49,9 @@ require 'brk'.setup {
 ```
 
 Commands:
-* `BrkClear`: Clear all breakpoints from current buffer
 * `BrkReload`: Reload debugger init file
 
-To run unit tests
+To run unit tests (set `DEBUG=1` to debug failures)
 ```bash
 ./check.sh
 ```

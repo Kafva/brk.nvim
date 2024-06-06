@@ -1,5 +1,6 @@
 # vi: ft=gitignore
 
+debugger.lua
 .testenv
 .gdbinit
 .lldbinit
