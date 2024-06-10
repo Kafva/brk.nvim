@@ -25,6 +25,44 @@ local function save_buffer()
     return true
 end
 
+local function goto_breakpoint()
+    local line = vim.api.nvim_get_current_line()
+    local splits = vim.split(line, ' ', {trimempty = true})
+    if #splits < 2 then
+        vim.notify("No location under cursor", vim.log.levels.WARN)
+        return
+    end
+    local sign = vim.trim(splits[1])
+    if sign ~= '[X]' and sign ~= '[C]' then
+        vim.notify("Cannot jump to " .. sign .. " breakpoint", vim.log.levels.WARN)
+        return
+    end
+    local bufpath = vim.split(splits[2], ':')[1]
+    local linenr = vim.split(splits[2], ':')[2]
+
+    if bufpath == nil or linenr == nil then
+        vim.notify("No location under cursor", vim.log.levels.WARN)
+        return
+    end
+
+    -- Quit out of the popover and move to the selected location
+    vim.cmd("q")
+
+    -- Use 'b' if the selected buffer is open, otherwise use 'e'
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        local path = vim.api.nvim_buf_get_name(buf)
+        if path == bufpath then
+            vim.cmd("b " .. bufpath)
+            break
+        end
+    end
+
+    if vim.fn.expand('%') ~= bufpath then
+        vim.cmd("e " .. bufpath)
+    end
+    vim.cmd(tostring(linenr))
+end
+
 -- A non-ambiguous filepath is needed for delve
 -- gdb does not like leading './'
 ---@param debugger_type DebuggerType
@@ -519,7 +557,8 @@ function M.list_breakpoints()
     end
 
     local lines = vim.split(content, '\n')
-    util.open_popover(lines, 'lua', 60, 30)
+    local popover_buf = util.open_popover(lines, 'lua', 60, 30)
+    vim.keymap.set('n', '<enter>', goto_breakpoint, { silent = true, buffer = popover_buf })
 end
 
 return M

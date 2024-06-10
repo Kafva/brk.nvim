@@ -59,6 +59,7 @@ end
 ---@param ft string
 ---@param width number
 ---@param height number
+---@return number
 function M.open_popover(lines, ft, width, height)
     local buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
@@ -74,6 +75,7 @@ function M.open_popover(lines, ft, width, height)
     vim.api.nvim_set_option_value('filetype', ft, { buf = buf })
     vim.keymap.set('n', 'q',     "<cmd>q<cr>", { silent = true, buffer = buf })
     vim.keymap.set('n', '<esc>', "<cmd>q<cr>", { silent = true, buffer = buf })
+    return buf
 end
 
 return M
