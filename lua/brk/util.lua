@@ -78,4 +78,18 @@ function M.open_popover(lines, ft, width, height)
     return buf
 end
 
+-- Open the selected path in a buffer, using 'b' allows us to
+-- switch to the buffer even if it is 'modified'.
+---@param filepath string
+function M.openfile(filepath)
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        local path = vim.api.nvim_buf_get_name(buf)
+        if path == filepath then
+            vim.cmd("b " .. filepath)
+            return
+        end
+    end
+    vim.cmd("e " .. filepath)
+end
+
 return M

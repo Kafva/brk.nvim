@@ -48,18 +48,7 @@ local function goto_breakpoint()
     -- Quit out of the popover and move to the selected location
     vim.cmd("q")
 
-    -- Use 'b' if the selected buffer is open, otherwise use 'e'
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        local path = vim.api.nvim_buf_get_name(buf)
-        if path == bufpath then
-            vim.cmd("b " .. bufpath)
-            break
-        end
-    end
-
-    if vim.fn.expand('%') ~= bufpath then
-        vim.cmd("e " .. bufpath)
-    end
+    util.openfile(bufpath)
     vim.cmd(tostring(linenr))
 end
 
