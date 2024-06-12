@@ -1,4 +1,5 @@
 local config = require 'brk.config'
+local popover = require 'brk.popover'
 
 local M = {}
 
@@ -49,6 +50,25 @@ function M.toggle_breakpoint(filetype, lnum)
 
     -- Move cursor back up to the line with the breakpoint
     vim.cmd "normal! k"
+end
+
+-- Only lists breakpoints in open buffers
+---@param filetype string
+function M.list_breakpoints(filetype)
+    local header = "  " .. filetype ..  "\n"
+    local breakpoints = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+
+        for i, line in ipairs(lines) do
+            if vim.trim(line) == config.inline_cmds[filetype]  then
+                local breakpoint = {file = vim.api.nvim_buf_get_name(buf), 
+                                    lnum = i}
+                table.insert(breakpoints, breakpoint)
+            end
+        end
+    end
+    popover.open_breakpoints_popover(breakpoints, header)
 end
 
 return M

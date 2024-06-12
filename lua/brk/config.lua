@@ -7,6 +7,12 @@ DebuggerType = {
     DELVE = "delve"
 }
 
+---@class Breakpoint
+---@field file string
+---@field lnum number
+---@field name string?
+---@field symbol string?
+---@field condition string?
 
 ---@class BrkOptions
 ---@field default_bindings? boolean Enable default bindings

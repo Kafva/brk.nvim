@@ -100,6 +100,8 @@ function M.list_breakpoints()
 
     if vim.tbl_contains(config.initfile_filetypes, filetype) then
         initfile.list_breakpoints()
+    elseif vim.tbl_contains(config.inline_filetypes, filetype) then
+        inline.list_breakpoints(filetype)
     else
         vim.notify("No support for filetype: '" .. filetype .. "'",
                    vim.log.levels.WARN)
