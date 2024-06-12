@@ -2,7 +2,11 @@
 set -e
 
 BRK_NVIM="$PWD"
-TESTS=(tests/*_test.lua)
+if [ $# = 0 ]; then
+    TESTS=(tests/*_test.lua)
+else
+    TESTS=$@
+fi
 
 if [ "$(basename $BRK_NVIM)" != brk.nvim ]; then
     echo "Run from project root" >&2

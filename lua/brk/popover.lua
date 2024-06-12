@@ -2,7 +2,33 @@ M = {}
 
 local util = require 'brk.util'
 
-local function goto_breakpoint()
+---@param lines table<string>
+---@param ft string
+---@param width number
+---@param height number
+---@return number
+local function open_popover(lines, ft, width, height)
+    local goto_breakpoint = require('brk.popover').goto_breakpoint
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+    vim.api.nvim_open_win(buf, true, {
+        relative = "cursor",
+        row = 0,
+        col = 0,
+        height = height,
+        width = width,
+        style = "minimal"
+    })
+    vim.api.nvim_set_option_value('filetype', ft, { buf = buf })
+    vim.keymap.set('n', 'q',     "<cmd>q<cr>", { silent = true, buffer = buf })
+    vim.keymap.set('n', '<esc>', "<cmd>q<cr>", { silent = true, buffer = buf })
+    vim.keymap.set('n', '<enter>', goto_breakpoint, { silent = true, buffer = buf })
+
+    return buf
+end
+
+function M.goto_breakpoint()
     local line = vim.api.nvim_get_current_line()
     local splits = vim.split(line, ' ', {trimempty = true})
     if #splits < 2 then
@@ -27,31 +53,6 @@ local function goto_breakpoint()
 
     util.openfile(bufpath)
     vim.cmd(tostring(linenr))
-end
-
----@param lines table<string>
----@param ft string
----@param width number
----@param height number
----@return number
-local function open_popover(lines, ft, width, height)
-    local buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-
-    vim.api.nvim_open_win(buf, true, {
-        relative = "cursor",
-        row = 0,
-        col = 0,
-        height = height,
-        width = width,
-        style = "minimal"
-    })
-    vim.api.nvim_set_option_value('filetype', ft, { buf = buf })
-    vim.keymap.set('n', 'q',     "<cmd>q<cr>", { silent = true, buffer = buf })
-    vim.keymap.set('n', '<esc>', "<cmd>q<cr>", { silent = true, buffer = buf })
-    vim.keymap.set('n', '<enter>', goto_breakpoint, { silent = true, buffer = buf })
-
-    return buf
 end
 
 ---@param breakpoints Breakpoint[]

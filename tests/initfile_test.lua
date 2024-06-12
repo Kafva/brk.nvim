@@ -4,6 +4,7 @@ M = {}
 
 local initfile = require 'brk.formats.initfile'
 local util = require 'brk.util'
+local popover = require 'brk.popover'
 local t = require 'tests.init'
 
 M.before_each = function()
@@ -18,7 +19,7 @@ M.before_each = function()
     -- Close all open files
     repeat
         vim.cmd[[bd!]]
-    until vim.           fn.expand('%') == ''
+    until vim.fn.expand('%') == ''
 
     -- Restore files
     vim.system({"git", "checkout", "tests/files"}):wait()
@@ -274,6 +275,32 @@ table.insert(M.testcases, { desc = "Toggle a lldb symbol breakpoint after adding
     t.assert_eq("breakpoint set --file tests/files/c/main.c --line 10\n" ..
                   "run\n", content)
 end})
+
+table.insert(M.testcases, { desc = "Popover navigation to another open buffer",
+                 fn = function()
+    local main_lnum = 12
+    local util_lnum = 10
+    local current_line = ""
+    vim.cmd[[edit tests/files/py/main.go]]
+    vim.cmd[[edit tests/files/py/util.go]]
+
+    -- Add a breakpoint in both files
+    -- Add breakpoints
+    vim.cmd[[b tests/files/go/main.go]]
+    initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+    vim.cmd[[b tests/files/go/util.go]]
+    initfile.toggle_breakpoint(DebuggerType.DELVE, 13)
+
+    initfile.list_breakpoints()
+
+    -- Select the first entry after a short delay
+    vim.api.nvim_win_set_cursor(0, {2,0})
+    popover.goto_breakpoint()
+
+    t.assert_eq(vim.fn.expand('%'), 'tests/files/go/main.go')
+    t.assert_eq(vim.fn.line('.'), 22)
+end})
+
 
 return M
 

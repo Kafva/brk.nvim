@@ -489,7 +489,8 @@ function M.toggle_symbol_breakpoint(debugger_type, user_symbol)
 end
 
 function M.list_breakpoints()
-    local header = "  " .. M.get_debugger_type(vim.bo.filetype) ..  "\n"
+    local initfile = require('brk.formats.initfile')
+    local header = "  " .. initfile.get_debugger_type(vim.bo.filetype) ..  "\n"
     popover.open_breakpoints_popover(breakpoints, header)
 end
 

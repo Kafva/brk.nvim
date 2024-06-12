@@ -14,7 +14,7 @@ end
 function M.delete_all_breakpoints()
     local cmdstr = config.inline_cmds[vim.bo.filetype]
     if cmdstr then
-        local cmd = ":g/" .. cmdstr .. "/d "
+        local cmd = "silent :g/" .. cmdstr .. "/d "
         vim.cmd(cmd)
     end
 end
