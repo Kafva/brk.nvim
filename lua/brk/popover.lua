@@ -20,6 +20,7 @@ local function open_popover(lines, ft, width, height)
         width = width,
         style = "minimal"
     })
+    vim.api.nvim_set_option_value('modifiable', false, { buf = buf })
     vim.api.nvim_set_option_value('filetype', ft, { buf = buf })
     vim.keymap.set('n', 'q',     "<cmd>q<cr>", { silent = true, buffer = buf })
     vim.keymap.set('n', '<esc>', "<cmd>q<cr>", { silent = true, buffer = buf })
