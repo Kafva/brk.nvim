@@ -95,8 +95,8 @@ function M.setup(user_opts)
         M[k] = v
     end
 
-    M['filetypes'] = vim.tbl_flatten{opts.initfile_filetypes,
-                                     opts.inline_filetypes}
+    M['filetypes'] = vim.iter({opts.initfile_filetypes,
+                              opts.inline_filetypes}):flatten():totable()
 end
 
 return M
