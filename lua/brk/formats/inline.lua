@@ -14,7 +14,7 @@ end
 function M.delete_all_breakpoints()
     local cmdstr = config.inline_cmds[vim.bo.filetype]
     if cmdstr then
-        local cmd = "silent :g/" .. cmdstr .. "/d "
+        local cmd = 'silent :g/' .. cmdstr .. '/d '
         vim.cmd(cmd)
     end
 end
@@ -37,33 +37,35 @@ function M.toggle_breakpoint(filetype, lnum)
 
     if vim.trim(content) == config.inline_cmds[filetype] then
         -- Remove breakpoint marker
-        vim.api.nvim_buf_set_text(0, lnum - 1, 0, lnum, 0, {''})
+        vim.api.nvim_buf_set_text(0, lnum - 1, 0, lnum, 0, { '' })
         return
     end
 
     -- Add breakpoint marker above current line
     local indent = string.rep(' ', vim.fn.indent(lnum))
     local cmdstr = indent .. config.inline_cmds[filetype]
-    local new_lines = {cmdstr, ''}
+    local new_lines = { cmdstr, '' }
 
     vim.api.nvim_buf_set_text(0, lnum - 1, 0, lnum - 1, 0, new_lines)
 
     -- Move cursor back up to the line with the breakpoint
-    vim.cmd "normal! k"
+    vim.cmd 'normal! k'
 end
 
 -- Only lists breakpoints in open buffers
 ---@param filetype string
 function M.list_breakpoints(filetype)
-    local header = "  " .. filetype ..  "\n"
+    local header = '  ' .. filetype .. '\n'
     local breakpoints = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 
         for i, line in ipairs(lines) do
-            if vim.trim(line) == config.inline_cmds[filetype]  then
-                local breakpoint = {file = vim.api.nvim_buf_get_name(buf), 
-                                    lnum = i}
+            if vim.trim(line) == config.inline_cmds[filetype] then
+                local breakpoint = {
+                    file = vim.api.nvim_buf_get_name(buf),
+                    lnum = i,
+                }
                 table.insert(breakpoints, breakpoint)
             end
         end

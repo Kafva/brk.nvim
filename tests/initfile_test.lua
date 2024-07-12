@@ -1,4 +1,4 @@
-require 'brk'.setup {}
+require('brk').setup {}
 
 M = {}
 
@@ -8,299 +8,352 @@ local popover = require 'brk.popover'
 local t = require 'tests.init'
 
 M.before_each = function()
-    initfile.delete_all_breakpoints('lldb')
-    initfile.delete_all_breakpoints('gdb')
-    initfile.delete_all_breakpoints('delve')
+    initfile.delete_all_breakpoints 'lldb'
+    initfile.delete_all_breakpoints 'gdb'
+    initfile.delete_all_breakpoints 'delve'
 
-    t.rm_f('./.lldbinit')
-    t.rm_f('./.gdbinit')
-    t.rm_f('./.dlvinit')
+    t.rm_f './.lldbinit'
+    t.rm_f './.gdbinit'
+    t.rm_f './.dlvinit'
 
     -- Close all open files
     repeat
-        vim.cmd[[bd!]]
-    until vim.fn.expand('%') == ''
+        vim.cmd [[bd!]]
+    until vim.fn.expand '%' == ''
 
     -- Restore files
-    vim.system({"git", "checkout", "tests/files"}):wait()
+    vim.system({ 'git', 'checkout', 'tests/files' }):wait()
 end
 
 M.testcases = {}
 
-table.insert(M.testcases, { desc = "Toggle a lldb breakpoint",
-                            fn = function()
-    vim.cmd[[edit tests/files/c/main.c]]
+table.insert(M.testcases, {
+    desc = 'Toggle a lldb breakpoint',
+    fn = function()
+        vim.cmd [[edit tests/files/c/main.c]]
 
-    -- Add breakpoint
-    initfile.toggle_breakpoint(DebuggerType.LLDB, 9)
+        -- Add breakpoint
+        initfile.toggle_breakpoint(DebuggerType.LLDB, 9)
 
-    local content = util.readfile('.lldbinit')
-    local expected = "breakpoint set --file tests/files/c/main.c --line 9\n" .. "run\n"
-    t.assert_eq(content, expected)
-    assert(t.sign_exists('brk', 9), 'no sign placed at line 9')
+        local content = util.readfile '.lldbinit'
+        local expected = 'breakpoint set --file tests/files/c/main.c --line 9\n'
+            .. 'run\n'
+        t.assert_eq(content, expected)
+        assert(t.sign_exists('brk', 9), 'no sign placed at line 9')
 
-    -- Remove breakpoint
-    initfile.toggle_breakpoint(DebuggerType.LLDB, 9)
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.LLDB, 9)
 
-    content = util.readfile('.lldbinit')
-    t.assert_eq(content, "")
-    assert(not t.sign_exists('brk', 9), 'sign still placed at line 9')
-end})
+        content = util.readfile '.lldbinit'
+        t.assert_eq(content, '')
+        assert(not t.sign_exists('brk', 9), 'sign still placed at line 9')
+    end,
+})
 
-table.insert(M.testcases, { desc = "Toggle a gdb breakpoint",
-                            fn = function()
-    vim.cmd[[edit tests/files/c/main.c]]
+table.insert(M.testcases, {
+    desc = 'Toggle a gdb breakpoint',
+    fn = function()
+        vim.cmd [[edit tests/files/c/main.c]]
 
-    -- Add breakpoint
-    initfile.toggle_breakpoint(DebuggerType.GDB, 7)
+        -- Add breakpoint
+        initfile.toggle_breakpoint(DebuggerType.GDB, 7)
 
-    local content = util.readfile('.gdbinit')
-    local expected = "break tests/files/c/main.c:7\n" .. "run\n"
-    t.assert_eq(content, expected)
-    assert(t.sign_exists('brk', 7), 'no sign placed at line 7')
+        local content = util.readfile '.gdbinit'
+        local expected = 'break tests/files/c/main.c:7\n' .. 'run\n'
+        t.assert_eq(content, expected)
+        assert(t.sign_exists('brk', 7), 'no sign placed at line 7')
 
-    -- Remove breakpoint
-    initfile.toggle_breakpoint(DebuggerType.GDB, 7)
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.GDB, 7)
 
-    content = util.readfile('.gdbinit')
-    t.assert_eq(content, "")
-    assert(not t.sign_exists('brk', 7), 'sign still placed at line 7')
-end})
+        content = util.readfile '.gdbinit'
+        t.assert_eq(content, '')
+        assert(not t.sign_exists('brk', 7), 'sign still placed at line 7')
+    end,
+})
 
-table.insert(M.testcases, { desc = "Toggle a delve breakpoint",
-                            fn = function()
-    vim.cmd[[edit tests/files/go/main.go]]
+table.insert(M.testcases, {
+    desc = 'Toggle a delve breakpoint',
+    fn = function()
+        vim.cmd [[edit tests/files/go/main.go]]
 
-    -- Add breakpoint
-    initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+        -- Add breakpoint
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
 
-    local content = util.readfile('.dlvinit')
-    local expected = "break testsfilesgomaingo22 ./tests/files/go/main.go:22\n" .. "continue\n"
-    t.assert_eq(content, expected)
-    assert(t.sign_exists('brk', 22), 'no sign placed at line 22')
+        local content = util.readfile '.dlvinit'
+        local expected = 'break testsfilesgomaingo22 ./tests/files/go/main.go:22\n'
+            .. 'continue\n'
+        t.assert_eq(content, expected)
+        assert(t.sign_exists('brk', 22), 'no sign placed at line 22')
 
-    -- Remove breakpoint
-    initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
 
-    content = util.readfile('.dlvinit')
-    t.assert_eq(content, "")
-    assert(not t.sign_exists('brk', 22), 'sign still placed at line 22')
-end})
+        content = util.readfile '.dlvinit'
+        t.assert_eq(content, '')
+        assert(not t.sign_exists('brk', 22), 'sign still placed at line 22')
+    end,
+})
 
-table.insert(M.testcases, { desc = "Toggle a lldb conditional breakpoint",
-                            fn = function()
-    vim.cmd[[edit tests/files/c/main.c]]
+table.insert(M.testcases, {
+    desc = 'Toggle a lldb conditional breakpoint',
+    fn = function()
+        vim.cmd [[edit tests/files/c/main.c]]
 
-    -- Add breakpoint
-    initfile.toggle_conditional_breakpoint(DebuggerType.LLDB, 6, 'i == 2')
+        -- Add breakpoint
+        initfile.toggle_conditional_breakpoint(DebuggerType.LLDB, 6, 'i == 2')
 
-    local content = util.readfile('.lldbinit')
-    t.assert_eq("breakpoint set --file tests/files/c/main.c --line 6 " ..
-                  "--condition 'i == 2'\n" ..
-                  "run\n", content)
-    assert(t.sign_exists('brk', 6), 'no sign placed at line 6')
+        local content = util.readfile '.lldbinit'
+        t.assert_eq(
+            'breakpoint set --file tests/files/c/main.c --line 6 '
+                .. "--condition 'i == 2'\n"
+                .. 'run\n',
+            content
+        )
+        assert(t.sign_exists('brk', 6), 'no sign placed at line 6')
 
-    -- Remove breakpoint
-    initfile.toggle_breakpoint(DebuggerType.LLDB, 6)
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.LLDB, 6)
 
-    content = util.readfile('.lldbinit')
-    t.assert_eq("", content)
-    assert(not t.sign_exists('brk', 6), 'sign still placed at line 6')
-end})
+        content = util.readfile '.lldbinit'
+        t.assert_eq('', content)
+        assert(not t.sign_exists('brk', 6), 'sign still placed at line 6')
+    end,
+})
 
-table.insert(M.testcases, { desc = "Toggle a gdb conditional breakpoint",
-                            fn = function()
-    vim.cmd[[edit tests/files/c/main.c]]
+table.insert(M.testcases, {
+    desc = 'Toggle a gdb conditional breakpoint',
+    fn = function()
+        vim.cmd [[edit tests/files/c/main.c]]
 
-    -- Add breakpoint
-    initfile.toggle_conditional_breakpoint(DebuggerType.GDB, 6, 'i == 3')
+        -- Add breakpoint
+        initfile.toggle_conditional_breakpoint(DebuggerType.GDB, 6, 'i == 3')
 
-    local content = util.readfile('.gdbinit')
-    t.assert_eq("break tests/files/c/main.c:6 if i == 3\n" ..
-                  "run\n", content)
-    assert(t.sign_exists('brk', 6), 'no sign placed at line 6')
+        local content = util.readfile '.gdbinit'
+        t.assert_eq(
+            'break tests/files/c/main.c:6 if i == 3\n' .. 'run\n',
+            content
+        )
+        assert(t.sign_exists('brk', 6), 'no sign placed at line 6')
 
-    -- Remove breakpoint
-    initfile.toggle_breakpoint(DebuggerType.GDB, 6)
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.GDB, 6)
 
-    content = util.readfile('.gdbinit')
-    t.assert_eq("", content)
-    assert(not t.sign_exists('brk', 6), 'sign still placed at line 6')
-end})
+        content = util.readfile '.gdbinit'
+        t.assert_eq('', content)
+        assert(not t.sign_exists('brk', 6), 'sign still placed at line 6')
+    end,
+})
 
-table.insert(M.testcases, { desc = "Toggle a delve conditional breakpoint",
-                            fn = function()
-    vim.cmd[[edit tests/files/go/main.go]]
+table.insert(M.testcases, {
+    desc = 'Toggle a delve conditional breakpoint',
+    fn = function()
+        vim.cmd [[edit tests/files/go/main.go]]
 
-    -- Add breakpoint
-    initfile.toggle_conditional_breakpoint(DebuggerType.DELVE, 22, 'true')
+        -- Add breakpoint
+        initfile.toggle_conditional_breakpoint(DebuggerType.DELVE, 22, 'true')
 
-    local content = util.readfile('.dlvinit')
-    t.assert_eq("break testsfilesgomaingo22 ./tests/files/go/main.go:22\n" ..
-                  "cond testsfilesgomaingo22 true\n" ..
-                  "continue\n", content)
-    assert(t.sign_exists('brk', 22), 'no sign placed at line 22')
+        local content = util.readfile '.dlvinit'
+        t.assert_eq(
+            'break testsfilesgomaingo22 ./tests/files/go/main.go:22\n'
+                .. 'cond testsfilesgomaingo22 true\n'
+                .. 'continue\n',
+            content
+        )
+        assert(t.sign_exists('brk', 22), 'no sign placed at line 22')
 
-    -- Remove breakpoint
-    initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
 
-    content = util.readfile('.dlvinit')
-    t.assert_eq("", content)
-    assert(not t.sign_exists('brk', 22), 'sign still placed at line 22')
-end})
+        content = util.readfile '.dlvinit'
+        t.assert_eq('', content)
+        assert(not t.sign_exists('brk', 22), 'sign still placed at line 22')
+    end,
+})
 
-table.insert(M.testcases, { desc = "Breakpoints are moved when sign placement changes due to more lines",
-                            fn = function()
-    vim.cmd[[edit tests/files/go/main.go]]
+table.insert(M.testcases, {
+    desc = 'Breakpoints are moved when sign placement changes due to more lines',
+    fn = function()
+        vim.cmd [[edit tests/files/go/main.go]]
 
-    -- Add breakpoint
-    initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+        -- Add breakpoint
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
 
-    local content = util.readfile('.dlvinit')
-    t.assert_eq("break testsfilesgomaingo22 ./tests/files/go/main.go:22\n" .. "continue\n", content)
-    assert(t.sign_exists('brk', 22), 'no sign placed at line 22')
+        local content = util.readfile '.dlvinit'
+        t.assert_eq(
+            'break testsfilesgomaingo22 ./tests/files/go/main.go:22\n'
+                .. 'continue\n',
+            content
+        )
+        assert(t.sign_exists('brk', 22), 'no sign placed at line 22')
 
-    -- Insert some more content before line 22
-    vim.api.nvim_buf_set_lines(0, 21, 21, false, { "// line1",
-                                                   "// line2",
-                                                   "// line3",
-                                                   "// line4" })
-    vim.cmd[[silent write!]]
+        -- Insert some more content before line 22
+        vim.api.nvim_buf_set_lines(
+            0,
+            21,
+            21,
+            false,
+            { '// line1', '// line2', '// line3', '// line4' }
+        )
+        vim.cmd [[silent write!]]
 
-    -- Breakpoint should now be at line 26
-    content = util.readfile('.dlvinit')
-    local expected = "break testsfilesgomaingo26 ./tests/files/go/main.go:26\n" .. "continue\n"
-    t.assert_eq(expected, content)
-    assert(t.sign_exists('brk', 26), 'no sign placed at line 26')
+        -- Breakpoint should now be at line 26
+        content = util.readfile '.dlvinit'
+        local expected = 'break testsfilesgomaingo26 ./tests/files/go/main.go:26\n'
+            .. 'continue\n'
+        t.assert_eq(expected, content)
+        assert(t.sign_exists('brk', 26), 'no sign placed at line 26')
 
-    -- Cleanup on success
-    vim.system({"git", "checkout", "tests/files"}):wait()
-end})
+        -- Cleanup on success
+        vim.system({ 'git', 'checkout', 'tests/files' }):wait()
+    end,
+})
 
-table.insert(M.testcases, { desc = "Breakpoints are moved when sign placement changes due to deleted lines",
-                            fn = function()
-    vim.cmd[[edit tests/files/go/main.go]]
+table.insert(M.testcases, {
+    desc = 'Breakpoints are moved when sign placement changes due to deleted lines',
+    fn = function()
+        vim.cmd [[edit tests/files/go/main.go]]
 
-    -- Add breakpoints
-    vim.cmd[[b tests/files/go/main.go]]
-    initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+        -- Add breakpoints
+        vim.cmd [[b tests/files/go/main.go]]
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
 
+        local content = util.readfile '.dlvinit'
+        t.assert_eq(
+            'break testsfilesgomaingo22 ./tests/files/go/main.go:22\n'
+                .. 'continue\n',
+            content
+        )
 
-    local content = util.readfile('.dlvinit')
-    t.assert_eq("break testsfilesgomaingo22 ./tests/files/go/main.go:22\n" ..
-                  "continue\n", content)
+        assert(t.sign_exists('brk', 22), 'no sign placed at line 22')
 
-    assert(t.sign_exists('brk', 22), 'no sign placed at line 22')
+        -- Delete line 22
+        vim.api.nvim_buf_set_lines(0, 21, 22, false, {})
+        vim.cmd [[silent wa!]]
 
-    -- Delete line 22
-    vim.api.nvim_buf_set_lines(0, 21, 22, false, {})
-    vim.cmd[[silent wa!]]
+        -- Breakpoint should be removed
+        content = util.readfile '.dlvinit'
+        t.assert_eq('', content)
 
-    -- Breakpoint should be removed
-    content = util.readfile('.dlvinit')
-    t.assert_eq("", content)
+        -- Cleanup on success
+        vim.system({ 'git', 'checkout', 'tests/files' }):wait()
+    end,
+})
 
-    -- Cleanup on success
-    vim.system({"git", "checkout", "tests/files"}):wait()
-end})
+table.insert(M.testcases, {
+    desc = 'Breakpoints are moved when sign placement changes due to more lines in two buffers',
+    fn = function()
+        vim.cmd [[edit tests/files/go/main.go]]
+        vim.cmd [[edit tests/files/go/util.go]]
 
-table.insert(M.testcases, { desc = "Breakpoints are moved when sign placement changes due to more lines in two buffers",
-                            fn = function()
-    vim.cmd[[edit tests/files/go/main.go]]
-    vim.cmd[[edit tests/files/go/util.go]]
+        -- Add breakpoints
+        vim.cmd [[b tests/files/go/main.go]]
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+        vim.cmd [[b tests/files/go/util.go]]
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 13)
 
-    -- Add breakpoints
-    vim.cmd[[b tests/files/go/main.go]]
-    initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
-    vim.cmd[[b tests/files/go/util.go]]
-    initfile.toggle_breakpoint(DebuggerType.DELVE, 13)
+        local content = util.readfile '.dlvinit'
+        t.assert_eq(
+            'break testsfilesgomaingo22 ./tests/files/go/main.go:22\n'
+                .. 'break testsfilesgoutilgo13 ./tests/files/go/util.go:13\n'
+                .. 'continue\n',
+            content
+        )
 
+        vim.cmd [[b tests/files/go/main.go]]
+        assert(t.sign_exists('brk', 22), 'no sign placed at line 22')
+        vim.cmd [[b tests/files/go/util.go]]
+        assert(t.sign_exists('brk', 13), 'no sign placed at line 13')
 
-    local content = util.readfile('.dlvinit')
-    t.assert_eq("break testsfilesgomaingo22 ./tests/files/go/main.go:22\n" ..
-                  "break testsfilesgoutilgo13 ./tests/files/go/util.go:13\n" ..
-                  "continue\n", content)
+        -- Insert some more content before line 22
+        vim.cmd [[b tests/files/go/main.go]]
+        vim.api.nvim_buf_set_lines(
+            0,
+            21,
+            21,
+            false,
+            { '// line1', '// line2', '// line3', '// line4' }
+        )
+        -- Insert some more content before line 13
+        vim.cmd [[b tests/files/go/util.go]]
+        vim.api.nvim_buf_set_lines(
+            0,
+            12,
+            12,
+            false,
+            { '// line1', '// line2', '// line3', '// line4' }
+        )
+        vim.cmd [[silent wa!]]
 
-    vim.cmd[[b tests/files/go/main.go]]
-    assert(t.sign_exists('brk', 22), 'no sign placed at line 22')
-    vim.cmd[[b tests/files/go/util.go]]
-    assert(t.sign_exists('brk', 13), 'no sign placed at line 13')
+        -- Breakpoint should now be at lines 26 and 17
+        content = util.readfile '.dlvinit'
+        t.assert_eq(
+            'break testsfilesgomaingo26 ./tests/files/go/main.go:26\n'
+                .. 'break testsfilesgoutilgo17 ./tests/files/go/util.go:17\n'
+                .. 'continue\n',
+            content
+        )
 
-    -- Insert some more content before line 22
-    vim.cmd[[b tests/files/go/main.go]]
-    vim.api.nvim_buf_set_lines(0, 21, 21, false, { "// line1",
-                                                   "// line2",
-                                                   "// line3",
-                                                   "// line4" })
-    -- Insert some more content before line 13
-    vim.cmd[[b tests/files/go/util.go]]
-    vim.api.nvim_buf_set_lines(0, 12, 12, false, { "// line1",
-                                                   "// line2",
-                                                   "// line3",
-                                                   "// line4" })
-    vim.cmd[[silent wa!]]
+        vim.cmd [[b tests/files/go/main.go]]
+        assert(t.sign_exists('brk', 26), 'no sign placed at line 26')
+        vim.cmd [[b tests/files/go/util.go]]
+        assert(t.sign_exists('brk', 17), 'no sign placed at line 17')
 
-    -- Breakpoint should now be at lines 26 and 17
-    content = util.readfile('.dlvinit')
-    t.assert_eq("break testsfilesgomaingo26 ./tests/files/go/main.go:26\n" ..
-                  "break testsfilesgoutilgo17 ./tests/files/go/util.go:17\n" ..
-                  "continue\n", content)
+        -- Cleanup on success
+        vim.system({ 'git', 'checkout', 'tests/files' }):wait()
+    end,
+})
 
-    vim.cmd[[b tests/files/go/main.go]]
-    assert(t.sign_exists('brk', 26), 'no sign placed at line 26')
-    vim.cmd[[b tests/files/go/util.go]]
-    assert(t.sign_exists('brk', 17), 'no sign placed at line 17')
+table.insert(M.testcases, {
+    desc = 'Toggle a lldb symbol breakpoint after adding a regular breakpoint',
+    fn = function()
+        vim.cmd [[edit tests/files/c/main.c]]
 
-    -- Cleanup on success
-    vim.system({"git", "checkout", "tests/files"}):wait()
-end})
+        -- Add regular breakpoints followed by a symbol breakpoint
+        initfile.toggle_breakpoint(DebuggerType.LLDB, 10)
+        initfile.toggle_symbol_breakpoint(DebuggerType.LLDB, 'printf')
 
-table.insert(M.testcases, { desc = "Toggle a lldb symbol breakpoint after adding a regular breakpoint",
-                            fn = function()
-    vim.cmd[[edit tests/files/c/main.c]]
+        local content = util.readfile '.lldbinit'
+        t.assert_eq(
+            'breakpoint set --file tests/files/c/main.c --line 10\n'
+                .. 'breakpoint set -n printf\n'
+                .. 'run\n',
+            content
+        )
 
-    -- Add regular breakpoints followed by a symbol breakpoint
-    initfile.toggle_breakpoint(DebuggerType.LLDB, 10)
-    initfile.toggle_symbol_breakpoint(DebuggerType.LLDB, 'printf')
+        -- Remove symbol breakpoint
+        initfile.toggle_symbol_breakpoint(DebuggerType.LLDB, 'printf')
 
-    local content = util.readfile('.lldbinit')
-    t.assert_eq("breakpoint set --file tests/files/c/main.c --line 10\n" ..
-                  "breakpoint set -n printf\n" ..
-                  "run\n", content)
+        content = util.readfile '.lldbinit'
+        t.assert_eq(
+            'breakpoint set --file tests/files/c/main.c --line 10\n' .. 'run\n',
+            content
+        )
+    end,
+})
 
-    -- Remove symbol breakpoint
-    initfile.toggle_symbol_breakpoint(DebuggerType.LLDB, 'printf')
+table.insert(M.testcases, {
+    desc = 'Popover navigation to another open buffer',
+    fn = function()
+        vim.cmd [[edit tests/files/py/main.go]]
+        vim.cmd [[edit tests/files/py/util.go]]
 
-    content = util.readfile('.lldbinit')
-    t.assert_eq("breakpoint set --file tests/files/c/main.c --line 10\n" ..
-                  "run\n", content)
-end})
+        -- Add a breakpoint in both files
+        -- Add breakpoints
+        vim.cmd [[b tests/files/go/main.go]]
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
+        vim.cmd [[b tests/files/go/util.go]]
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 13)
 
-table.insert(M.testcases, { desc = "Popover navigation to another open buffer",
-                 fn = function()
-    local main_lnum = 12
-    local util_lnum = 10
-    local current_line = ""
-    vim.cmd[[edit tests/files/py/main.go]]
-    vim.cmd[[edit tests/files/py/util.go]]
+        initfile.list_breakpoints()
 
-    -- Add a breakpoint in both files
-    -- Add breakpoints
-    vim.cmd[[b tests/files/go/main.go]]
-    initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
-    vim.cmd[[b tests/files/go/util.go]]
-    initfile.toggle_breakpoint(DebuggerType.DELVE, 13)
+        -- Select the first entry after a short delay
+        vim.api.nvim_win_set_cursor(0, { 2, 0 })
+        popover.goto_breakpoint()
 
-    initfile.list_breakpoints()
-
-    -- Select the first entry after a short delay
-    vim.api.nvim_win_set_cursor(0, {2,0})
-    popover.goto_breakpoint()
-
-    t.assert_eq(vim.fn.expand('%'), 'tests/files/go/main.go')
-    t.assert_eq(vim.fn.line('.'), 22)
-end})
-
+        t.assert_eq(vim.fn.expand '%', 'tests/files/go/main.go')
+        t.assert_eq(vim.fn.line '.', 22)
+    end,
+})
 
 return M
-

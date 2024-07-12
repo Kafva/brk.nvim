@@ -10,11 +10,11 @@ function M.openfile(filepath)
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         local path = vim.api.nvim_buf_get_name(buf)
         if path == filepath then
-            vim.cmd("b " .. filepath)
+            vim.cmd('b ' .. filepath)
             return
         end
     end
-    vim.cmd("e " .. filepath)
+    vim.cmd('e ' .. filepath)
 end
 
 ---@param filepath string
@@ -26,20 +26,20 @@ function M.readfile(filepath)
 
     if not fd then
         vim.notify(err or ('Failed to open ' .. filepath), vim.log.levels.ERROR)
-        return ""
+        return ''
     end
 
     content, err = uv.fs_read(fd, 8192)
 
     if not content then
         vim.notify(err or ('Failed to read ' .. filepath), vim.log.levels.ERROR)
-        return ""
+        return ''
     end
 
     _, err = uv.fs_close(fd)
     if err then
         vim.notify(err, vim.log.levels.ERROR)
-        return ""
+        return ''
     end
 
     return content
