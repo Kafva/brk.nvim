@@ -16,7 +16,7 @@ DebuggerType = {
 
 ---@class BrkOptions
 ---@field default_bindings? boolean Enable default bindings
----@field auto_start? boolean Write an init file that automatically starts the debugger
+---@field auto_start table<string, boolean> Determine if the initfile should append an autorun command for each filetype
 ---@field preferred_debugger_format? DebuggerType
 ---@field breakpoint_sign? string
 ---@field conditional_breakpoint_sign? string
@@ -30,7 +30,15 @@ DebuggerType = {
 ---@type BrkOptions
 M.default_opts = {
     default_bindings = true,
-    auto_start = true,
+    auto_start = {
+        ['c'] = true,
+        ['cpp'] = true,
+        ['objc'] = true,
+        ['rust'] = true,
+        ['go'] = true,
+        ["swift"] = false,
+
+    },
     breakpoint_sign_priority = 90,
     breakpoint_sign = '󰝥 ',
     conditional_breakpoint_sign = '󰝥 ',
@@ -48,7 +56,8 @@ M.default_opts = {
         'cpp',
         'objc',
         'rust',
-        'go'
+        'go',
+        'swift'
     },
     inline_filetypes = {
         'python',

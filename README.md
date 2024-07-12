@@ -9,7 +9,7 @@ brk.nvim compared to a full dap setup is that it requires zero configuration
 and works as long as you have a way to run your program under one of the
 supported debuggers.
 
-* [lldb/gdb](https://lldb.llvm.org/use/map.html) for C, C++, Rust etc.
+* [lldb/gdb](https://lldb.llvm.org/use/map.html) for C, C++, Swift, Rust etc.
 * [delve](https://github.com/go-delve/delve/blob/master/Documentation/cli/getting_started.md) for Go
 
 Note that delve does not autoload init files in the same way as gdb/lldb, you need to
@@ -36,8 +36,12 @@ require 'brk'.setup {
     --  Show internal breakpoint list: 'dl'
     --  Delete all breakpoints: 'dC'
     default_bindings = true,
-    -- Insert 'run' command at the end of the init file automatically
-    auto_start = true,
+    -- Insert 'run' command at the end of the init file automatically,
+    -- configured per language
+    auto_start = {
+        ["c"] = true,
+        ["swift"] = false,
+    },
     breakpoint_sign = '󰝥 ',
     conditional_breakpoint_sign = '󰝥 ',
     breakpoint_color = 'Error',
@@ -65,8 +69,17 @@ dlv debug --continue --headless --accept-multiclient --listen 127.0.0.1:4777
 dlv connect 127.0.0.1:4777
 ```
 
-### lldb
-```lldbinit
-# Show variables in frame
-frame variable
+### iOS
+```bash
+# Launch and attach to iOS app in simulator
+xcrun simctl launch booted $APP_ID
+# => PID
+xcrun lldb -o "attach -p $PID" $APP.app
+
+# Launch and attach to iOS app on real device (requires Xcode 16 or newer)
+xcrun devicectl device process launch --device $DEVICE_NAME $APP_ID
+xcrun devicectl device info processes --device $DEVICE_NAME
+# => PID
+xcrun lldb -o "device select $DEVICE_NAME" \
+           -o "device process attach --pid $PID"
 ```

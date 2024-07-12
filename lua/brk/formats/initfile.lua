@@ -112,7 +112,8 @@ local function write_breakpoints_to_file(debugger_type)
         return
     end
 
-    if #content > 0 and config.auto_start then
+    local auto_start = config.auto_start[vim.o.ft]
+    if #content > 0 and auto_start  then
         if debugger_type == "delve" then
             content = content .. "continue\n"
         else
