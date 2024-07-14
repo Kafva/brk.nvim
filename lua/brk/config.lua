@@ -87,12 +87,24 @@ function M.setup(user_opts)
                                          linehl='',
                                          texthl=opts.conditional_breakpoint_color})
     if opts and opts.default_bindings then
-        vim.keymap.set({'n', 'i'}, '<F9>', require'brk'.toggle_breakpoint, {})
-        vim.keymap.set('n', 'db', require'brk'.toggle_breakpoint, {})
-        vim.keymap.set('n', 'dc', require'brk'.toggle_conditional_breakpoint, {})
-        vim.keymap.set('n', 'ds', require'brk'.toggle_symbol_breakpoint, {})
-        vim.keymap.set('n', 'dl', require'brk'.list_breakpoints, {})
-        vim.keymap.set('n', 'dC', require'brk'.delete_all_breakpoints, {})
+        vim.keymap.set({'n', 'i'}, '<F9>', require'brk'.toggle_breakpoint, {
+            desc = "Toggle breakpoint"
+        })
+        vim.keymap.set('n', 'db', require'brk'.toggle_breakpoint, {
+            desc = "Toggle breakpoint"
+        })
+        vim.keymap.set('n', 'dc', require'brk'.toggle_conditional_breakpoint, {
+            desc = "Toggle conditional breakpoint"
+        })
+        vim.keymap.set('n', 'ds', require'brk'.toggle_symbol_breakpoint, {
+            desc = "Toggle symbol breakpoint"
+        })
+        vim.keymap.set('n', 'dl', require'brk'.list_breakpoints, {
+            desc = "List breakpoints"
+        })
+        vim.keymap.set('n', 'dC', require'brk'.delete_all_breakpoints, {
+            desc = "Delete all breakpoints"
+        })
     end
     -- stylua: ignore end
 
