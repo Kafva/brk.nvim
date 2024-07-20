@@ -16,7 +16,10 @@ local function save_buffer()
         vim.cmd 'silent write'
     end)
     if not ok then
-        vim.notify('Error saving buffer: ' .. tostring(err))
+        vim.notify(
+            'Error saving buffer: ' .. tostring(err),
+            vim.log.levels.ERROR
+        )
         return false
     end
     return true
@@ -46,6 +49,8 @@ local function symbol_breakpoint_tostring(debugger_type, symbol)
         return 'breakpoint set -n ' .. symbol .. '\n'
     elseif debugger_type == DebuggerType.DELVE then
         return 'break ' .. symbol .. '\n'
+    elseif debugger_type == DebuggerType.JDB then
+        error('Not implemented for: ' .. debugger_type)
     else
         error('Unknown debugger type: ' .. debugger_type)
     end
@@ -97,6 +102,41 @@ local function breakpoint_tostring(debugger_type, breakpoint)
             .. tostring(breakpoint.lnum)
             .. '\n'
             .. condition
+    elseif debugger_type == DebuggerType.JDB then
+        -- jdb expects a Java class name, not a filepath
+        -- e.g.
+        --  stop in com.myapp.MainActivity:51
+        --
+        -- We need to save the actual filepath as a comment to properly resolve
+        -- where signs should be placed.
+        if breakpoint.name == nil then
+            -- Determine the class name from the filepath where the new
+            -- breakpoint is being placed
+            -- XXX: Assumes class path starts under 'java/'
+            local class_path =
+                breakpoint.file:match '[-_a-zA-Z0-9./]+/java/([-_a-zA-Z0-9./]+)'
+            if class_path == nil then
+                error(
+                    "Could not determine class for: '" .. breakpoint.file .. "'"
+                )
+            end
+
+            local splits = vim.split(class_path, '.', { plain = true })
+            local ext = '.' .. splits[#splits]
+            breakpoint.name =
+                class_path:sub(1, #class_path - #ext):gsub('/', '.')
+        end
+
+        return '# '
+            .. breakpoint.name
+            .. ' '
+            .. breakpoint.file
+            .. '\n'
+            .. 'stop in '
+            .. breakpoint.name
+            .. ':'
+            .. tostring(breakpoint.lnum)
+            .. '\n'
     else
         error('Unknown debugger type: ' .. debugger_type)
     end
@@ -118,12 +158,25 @@ local function write_breakpoints_to_file(debugger_type)
         return
     end
 
-    local auto_start = config.auto_start[vim.o.ft]
-    if #content > 0 and auto_start then
-        if debugger_type == 'delve' then
-            content = content .. 'continue\n'
-        else
-            content = content .. 'run\n'
+    if #content > 0 then
+        if debugger_type == DebuggerType.JDB then
+            -- Enable GDB-style repetition
+            content = content .. 'repeat on\n'
+        end
+
+        local auto_start = config.auto_start[vim.o.ft]
+
+        if auto_start then
+            if debugger_type == DebuggerType.DELVE then
+                content = content .. 'continue\n'
+            elseif debugger_type == DebuggerType.JDB then
+                content = content .. 'resume\n'
+            elseif
+                debugger_type == DebuggerType.GDB
+                or debugger_type == DebuggerType.LLDB
+            then
+                content = content .. 'run\n'
+            end
         end
     end
 
@@ -188,7 +241,7 @@ end
 ---@return Breakpoint|nil
 local function breakpoint_from_line(debugger_type, initfile_linenr, line)
     local lnum, file, name, symbol, condition
-    if debugger_type == 'gdb' then
+    if debugger_type == DebuggerType.GDB then
         file = line:match 'break%s+([^:]+):'
         if file == nil then
             -- Parse as a symbol breakpoint
@@ -199,7 +252,7 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
         end
         lnum = line:match ':(%d+)'
         condition = line:match ' if (.+)'
-    elseif debugger_type == 'lldb' then
+    elseif debugger_type == DebuggerType.LLDB then
         file = line:match ' --file ([^ ]+)'
         if file == nil then
             -- Parse as a symbol breakpoint
@@ -210,7 +263,7 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
         end
         lnum = line:match ' --line ([^ ]+)'
         condition = line:match ' --condition (.+)'
-    elseif debugger_type == 'delve' then
+    elseif debugger_type == DebuggerType.DELVE then
         file = line:match 'break%s+[a-zA-Z0-9]+%s+([^:]+):'
         name = line:match 'break%s+([a-zA-Z0-9]+)'
 
@@ -228,6 +281,27 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
         else
             -- Parse as a line based breakpoint
             lnum = line:match ':(%d+)'
+        end
+    elseif debugger_type == DebuggerType.JDB then
+        name = line:match '^#%s+([-_a-zA-Z0-9.]+)'
+        if name == nil then
+            -- Parse as a 'stop in' line
+            name = line:match 'stop in%s+([-_a-zA-Z0-9.]+)'
+            if name == nil then
+                return nil
+            end
+
+            lnum = line:match 'stop in%s+[-_a-zA-Z0-9.]+:(%d+)'
+            if lnum == nil then
+                vim.notify(
+                    "Failed to parse line number: '" .. name .. "'",
+                    vim.log.levels.ERROR
+                )
+                return nil
+            end
+        else
+            -- Parse as a hint comment for the filepath
+            file = line:match '^#%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+)'
         end
     else
         error("Unknown debugger file format: '" .. debugger_type .. "'")
@@ -276,6 +350,31 @@ local function combine_delve_breakpoints()
                 or breakpoint.lnum
             combined_breakpoints[breakpoint.name].condition = old_value.condition
                 or breakpoint.condition
+        else
+            combined_breakpoints[breakpoint.name] = breakpoint
+        end
+        ::continue::
+    end
+    breakpoints = {}
+    for _, v in pairs(combined_breakpoints) do
+        table.insert(breakpoints, v)
+    end
+end
+
+-- The 'file' and 'lnum' are read from seperate lines .jdbrc, combine
+-- entries with the same 'name' into one.
+local function combine_jdb_breakpoints()
+    local combined_breakpoints = {}
+    for _, breakpoint in pairs(breakpoints) do
+        if breakpoint == nil or breakpoint.name == nil then
+            goto continue
+        end
+        local old_value = combined_breakpoints[breakpoint.name]
+        if old_value ~= nil then
+            combined_breakpoints[breakpoint.name].lnum = old_value.lnum
+                or breakpoint.lnum
+            combined_breakpoints[breakpoint.name].file = old_value.file
+                or breakpoint.file
         else
             combined_breakpoints[breakpoint.name] = breakpoint
         end
@@ -348,6 +447,8 @@ end
 function M.get_debugger_type(filetype)
     if filetype == 'go' then
         return DebuggerType.DELVE
+    elseif filetype == 'java' or filetype == 'kotlin' then
+        return DebuggerType.JDB
     end
 
     for debugger_type, initfile_path in pairs(config.initfile_paths) do
@@ -378,6 +479,8 @@ function M.load_breakpoints(debugger_type)
 
     if debugger_type == DebuggerType.DELVE then
         combine_delve_breakpoints()
+    elseif debugger_type == DebuggerType.JDB then
+        combine_jdb_breakpoints()
     end
 
     reload_breakpoint_signs(debugger_type)
@@ -451,9 +554,15 @@ end
 ---@param lnum number
 ---@param user_condition string?
 function M.toggle_conditional_breakpoint(debugger_type, lnum, user_condition)
+    if debugger_type == DebuggerType.JDB then
+        vim.notify('Not implemented for ' .. debugger_type, vim.log.levels.WARN)
+        return
+    end
+
     if not save_buffer() then
         return
     end
+
     local breakpoint = {
         ---@diagnostic disable-next-line: param-type-mismatch
         file = get_filepath(debugger_type, vim.fn.expand '%'),
@@ -491,6 +600,11 @@ end
 ---@param debugger_type DebuggerType
 ---@param user_symbol string?
 function M.toggle_symbol_breakpoint(debugger_type, user_symbol)
+    if debugger_type == DebuggerType.JDB then
+        vim.notify('Not implemented for ' .. debugger_type, vim.log.levels.WARN)
+        return
+    end
+
     if not save_buffer() then
         return
     end

@@ -5,6 +5,7 @@ debugger.lua
 .gdbinit
 .lldbinit
 .dlvinit
+.jdbrc
 
 # Go
 __debug_bin*

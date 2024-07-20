@@ -4,17 +4,16 @@ M = {}
 
 local initfile = require 'brk.formats.initfile'
 local util = require 'brk.util'
+local config = require 'brk.config'
 local popover = require 'brk.popover'
 local t = require 'tests.init'
 
 M.before_each = function()
-    initfile.delete_all_breakpoints 'lldb'
-    initfile.delete_all_breakpoints 'gdb'
-    initfile.delete_all_breakpoints 'delve'
-
-    t.rm_f './.lldbinit'
-    t.rm_f './.gdbinit'
-    t.rm_f './.dlvinit'
+    -- Delete all breakpoints and initfiles from prior runs
+    for _, dbg in pairs(DebuggerType) do
+        initfile.delete_all_breakpoints(dbg)
+        t.rm_f(config.default_opts.initfile_paths[dbg])
+    end
 
     -- Close all open files
     repeat
@@ -92,6 +91,31 @@ table.insert(M.testcases, {
         content = util.readfile '.dlvinit'
         t.assert_eq(content, '')
         assert(not t.sign_exists('brk', 22), 'sign still placed at line 22')
+    end,
+})
+
+table.insert(M.testcases, {
+    desc = 'Toggle a jdb breakpoint',
+    fn = function()
+        vim.cmd [[edit tests/files/kt/java/org/myapp/Main.kt]]
+
+        -- Add breakpoint
+        initfile.toggle_breakpoint(DebuggerType.JDB, 10)
+
+        local content = util.readfile '.jdbrc'
+        local expected = '# org.myapp.Main tests/files/kt/java/org/myapp/Main.kt\n'
+            .. 'stop in org.myapp.Main:10\n'
+            .. 'repeat on\n'
+            .. 'resume\n'
+        t.assert_eq(content, expected)
+        assert(t.sign_exists('brk', 10), 'no sign placed at line 10')
+
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.JDB, 10)
+
+        content = util.readfile '.jdbrc'
+        t.assert_eq(content, '')
+        assert(not t.sign_exists('brk', 10), 'sign still placed at line 10')
     end,
 })
 

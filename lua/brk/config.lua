@@ -5,6 +5,7 @@ DebuggerType = {
     GDB = 'gdb',
     LLDB = 'lldb',
     DELVE = 'delve',
+    JDB = 'jdb',
 }
 
 ---@class Breakpoint
@@ -37,6 +38,8 @@ M.default_opts = {
         ['rust'] = true,
         ['go'] = true,
         ['swift'] = false,
+        ['kotlin'] = true,
+        ['java'] = true,
     },
     breakpoint_sign_priority = 90,
     breakpoint_sign = '󰝥 ',
@@ -49,6 +52,7 @@ M.default_opts = {
         [DebuggerType.LLDB] = './.lldbinit',
         [DebuggerType.GDB] = './.gdbinit',
         [DebuggerType.DELVE] = './.dlvinit',
+        [DebuggerType.JDB] = './.jdbrc',
     },
     initfile_filetypes = {
         'c',
@@ -57,6 +61,8 @@ M.default_opts = {
         'rust',
         'go',
         'swift',
+        'java',
+        'kotlin',
     },
     inline_filetypes = {
         'python',
