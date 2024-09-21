@@ -63,11 +63,21 @@ To run unit tests (set `DEBUG=1` to debug failures)
 
 ## Tips
 
-### delve
+### Go
 ```bash
 # Debug a go program in the foreground (e.g. lf) and attach to it
 dlv debug --continue --headless --accept-multiclient --listen 127.0.0.1:4777
 dlv connect 127.0.0.1:4777
+```
+
+### Rust
+```bash
+# Debug a unit test
+cargo test --no-run &&
+    rust-lldb $(fd "^$NAME-[0-9a-z]{16}$" target/debug/deps) -- $testcase
+
+# To show stdout/stderr:
+cargo test -- --nocapture
 ```
 
 ### iOS
