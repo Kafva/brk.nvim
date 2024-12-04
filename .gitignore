@@ -6,6 +6,8 @@ debugger.lua
 .lldbinit
 .dlvinit
 .jdbrc
+.ghci
+.ghci-init
 
 # Go
 __debug_bin*

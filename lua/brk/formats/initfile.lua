@@ -51,6 +51,8 @@ local function symbol_breakpoint_tostring(debugger_type, symbol)
         return 'break ' .. symbol .. '\n'
     elseif debugger_type == DebuggerType.JDB then
         error('Not implemented for: ' .. debugger_type)
+    elseif debugger_type == DebuggerType.GHCI then
+        return ':break ' .. symbol .. '\n'
     else
         error('Unknown debugger type: ' .. debugger_type)
     end
@@ -107,14 +109,18 @@ local function breakpoint_tostring(debugger_type, breakpoint)
         -- e.g.
         --  stop in com.myapp.MainActivity:51
         --
-        -- We need to save the actual filepath as a comment to properly resolve
-        -- where signs should be placed.
+        -- We need to save the actual filepath and lnum as a comment to properly
+        -- resolve where signs should be placed.
         if breakpoint.name == nil then
             -- Determine the class name from the filepath where the new
             -- breakpoint is being placed
-            -- XXX: Assumes class path starts under 'java/'
+            -- XXX: Assumes class path starts under 'java/' or 'kotlin/'
             local class_path =
                 breakpoint.file:match '[-_a-zA-Z0-9./]+/java/([-_a-zA-Z0-9./]+)'
+            if class_path == nil then
+                class_path =
+                    breakpoint.file:match '[-_a-zA-Z0-9./]+/kotlin/([-_a-zA-Z0-9./]+)'
+            end
             if class_path == nil then
                 error(
                     "Could not determine class for: '" .. breakpoint.file .. "'"
@@ -131,10 +137,28 @@ local function breakpoint_tostring(debugger_type, breakpoint)
             .. breakpoint.name
             .. ' '
             .. breakpoint.file
+            .. ':'
+            .. tostring(breakpoint.lnum)
             .. '\n'
             .. 'stop in '
             .. breakpoint.name
             .. ':'
+            .. tostring(breakpoint.lnum)
+            .. '\n'
+    elseif debugger_type == DebuggerType.GHCI then
+        -- GHCi breakpoints do not include the full file path, place this
+        -- as a comment hint before the actual break statement
+        local name = vim.fs.basename(filepath):gsub('.hs$', '')
+        return '-- '
+            .. name
+            .. ' '
+            .. filepath
+            .. ':'
+            .. tostring(breakpoint.lnum)
+            .. '\n'
+            .. ':break '
+            .. name
+            .. ' '
             .. tostring(breakpoint.lnum)
             .. '\n'
     else
@@ -202,10 +226,7 @@ local function reload_breakpoint_signs(debugger_type)
             local sign_name = breakpoint.condition ~= nil
                     and 'BrkConditionalBreakpoint'
                 or 'BrkBreakpoint'
-            vim.notify(
-                'Placing sign at ' .. file .. ':' .. tostring(lnum),
-                vim.log.levels.TRACE
-            )
+            -- vim.notify('Placing sign at ' .. file .. ':' .. tostring(lnum))
             vim.fn.sign_place(0, 'brk', sign_name, buf, {
                 lnum = lnum,
                 priority = config.breakpoint_sign_priority,
@@ -240,7 +261,7 @@ end
 ---@param line string
 ---@return Breakpoint|nil
 local function breakpoint_from_line(debugger_type, initfile_linenr, line)
-    local lnum, file, name, symbol, condition
+    local lnum, file, name, symbol, condition, modname
     if debugger_type == DebuggerType.GDB then
         file = line:match 'break%s+([^:]+):'
         if file == nil then
@@ -283,15 +304,53 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
             lnum = line:match ':(%d+)'
         end
     elseif debugger_type == DebuggerType.JDB then
-        name = line:match '^#%s+([-_a-zA-Z0-9.]+)'
-        if name == nil then
+        file = line:match '^#%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+):%d+'
+        if file == nil then
             -- Parse as a 'stop in' line
-            name = line:match 'stop in%s+([-_a-zA-Z0-9.]+)'
-            if name == nil then
-                return nil
-            end
-
+            modname = line:match 'stop in%s+([-_a-zA-Z0-9.]+)'
             lnum = line:match 'stop in%s+[-_a-zA-Z0-9.]+:(%d+)'
+        else
+            -- Parse as a hint comment for the filepath
+            modname = line:match '^#%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+):%d+'
+            lnum = line:match '^#%s+[-_a-zA-Z0-9.]+%s+[-_a-zA-Z0-9/.]+:(%d+)'
+        end
+
+        if modname == nil then
+            return
+        end
+
+        if lnum == nil then
+            vim.notify(
+                "Failed to parse line number: '" .. name .. "'",
+                vim.log.levels.ERROR
+            )
+            return nil
+        end
+        -- The 'name' needs to be based of both the module name and line number
+        -- to avoid collisions when combining.
+        name = modname .. tostring(lnum)
+    elseif debugger_type == DebuggerType.GHCI then
+        file = line:match '^--%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+):%d+'
+        if file == nil then
+            -- Parse as a ':break' line
+            modname = line:match ':break%s+([a-zA-Z0-9.]+)%s*'
+            lnum = line:match ':break%s+[a-zA-Z0-9.]+%s+(%d+)'
+            if modname ~= nil and lnum == nil then
+                -- No line number, treat as a symbol breakpoint
+                symbol = modname
+            end
+        else
+            -- Parse as a hint comment for the filepath
+            modname =
+                line:match '^--%s+([-_a-zA-Z0-9.]+)%s+[-_a-zA-Z0-9/.]+:%d+'
+            lnum = line:match '^--%s+[-_a-zA-Z0-9.]+%s+[-_a-zA-Z0-9/.]+:(%d+)'
+        end
+
+        if modname == nil then
+            return nil
+        end
+
+        if symbol == nil then
             if lnum == nil then
                 vim.notify(
                     "Failed to parse line number: '" .. name .. "'",
@@ -299,13 +358,11 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
                 )
                 return nil
             end
-        else
-            -- Parse as a hint comment for the filepath
-            file = line:match '^#%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+)'
+            name = modname .. tostring(lnum)
         end
     else
         error("Unknown debugger file format: '" .. debugger_type .. "'")
-        return
+        return nil
     end
 
     if file then
@@ -335,35 +392,11 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
     }
 end
 
--- Delve breakpoints are parsed from two lines.
--- Combine all breakpoints that exist with the same name into one,
--- one of them has the lnum, the other has the conditional.
-local function combine_delve_breakpoints()
-    local combined_breakpoints = {}
-    for _, breakpoint in pairs(breakpoints) do
-        if breakpoint == nil or breakpoint.name == nil then
-            goto continue
-        end
-        local old_value = combined_breakpoints[breakpoint.name]
-        if old_value ~= nil then
-            combined_breakpoints[breakpoint.name].lnum = old_value.lnum
-                or breakpoint.lnum
-            combined_breakpoints[breakpoint.name].condition = old_value.condition
-                or breakpoint.condition
-        else
-            combined_breakpoints[breakpoint.name] = breakpoint
-        end
-        ::continue::
-    end
-    breakpoints = {}
-    for _, v in pairs(combined_breakpoints) do
-        table.insert(breakpoints, v)
-    end
-end
-
--- The 'file' and 'lnum' are read from seperate lines .jdbrc, combine
--- entries with the same 'name' into one.
-local function combine_jdb_breakpoints()
+-- For some formats a breakpoint is read from several lines.
+-- For delve, this applies for conditional breakpoints
+-- For GHCi and jdb, the 'file' is read from a hint comment on a seperate line.
+-- Merge all breakpoints with the same 'name' into one.
+local function combine_breakpoints_by_name()
     local combined_breakpoints = {}
     for _, breakpoint in pairs(breakpoints) do
         if breakpoint == nil or breakpoint.name == nil then
@@ -449,6 +482,8 @@ function M.get_debugger_type(filetype)
         return DebuggerType.DELVE
     elseif filetype == 'java' or filetype == 'kotlin' then
         return DebuggerType.JDB
+    elseif filetype == 'haskell' then
+        return DebuggerType.GHCI
     end
 
     for debugger_type, initfile_path in pairs(config.initfile_paths) do
@@ -477,10 +512,12 @@ function M.load_breakpoints(debugger_type)
         end
     end
 
-    if debugger_type == DebuggerType.DELVE then
-        combine_delve_breakpoints()
-    elseif debugger_type == DebuggerType.JDB then
-        combine_jdb_breakpoints()
+    if
+        debugger_type == DebuggerType.DELVE
+        or debugger_type == DebuggerType.JDB
+        or debugger_type == DebuggerType.GHCI
+    then
+        combine_breakpoints_by_name()
     end
 
     reload_breakpoint_signs(debugger_type)
@@ -554,7 +591,10 @@ end
 ---@param lnum number
 ---@param user_condition string?
 function M.toggle_conditional_breakpoint(debugger_type, lnum, user_condition)
-    if debugger_type == DebuggerType.JDB then
+    if
+        debugger_type == DebuggerType.JDB
+        or debugger_type == DebuggerType.GHCI
+    then
         vim.notify('Not implemented for ' .. debugger_type, vim.log.levels.WARN)
         return
     end

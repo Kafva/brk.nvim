@@ -12,12 +12,23 @@ supported debuggers.
 * [lldb/gdb](https://lldb.llvm.org/use/map.html) for C, C++, Swift, Rust etc.
 * [delve](https://github.com/go-delve/delve/blob/master/Documentation/cli/getting_started.md) for Go
 * [jdb](https://github.com/openjdk/jdk) for Kotlin and Java
+* [ghci](https://gitlab.haskell.org/ghc/ghc/-/tree/master/ghc/GHCi) for Haskell
 
 Note that delve does not autoload init files in the same way as gdb/lldb, you need to
 explicitly provide one, brk.nvim uses .dlvinit by default
 
 ```bash
 (cd tests/files/go && dlv debug --init .dlvinit)
+```
+
+GHCi automatically loads `.ghci` but brk.nvim writes breakpoints to
+`.ghci-init` by default since the modules that breakpoints are placed in
+will not be compiled yet when `.ghci` is read. Example usecase:
+
+```bash
+runhaskell tests/files/hs/Main.hs
+(ghci) :script .ghci-init
+(ghci) :main ["12"]
 ```
 
 The toggle breakpoint function is also setup to insert inline breakpoints for

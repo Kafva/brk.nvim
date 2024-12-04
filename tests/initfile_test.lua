@@ -103,7 +103,7 @@ table.insert(M.testcases, {
         initfile.toggle_breakpoint(DebuggerType.JDB, 10)
 
         local content = util.readfile '.jdbrc'
-        local expected = '# org.myapp.Main tests/files/kt/java/org/myapp/Main.kt\n'
+        local expected = '# org.myapp.Main tests/files/kt/java/org/myapp/Main.kt:10\n'
             .. 'stop in org.myapp.Main:10\n'
             .. 'repeat on\n'
             .. 'resume\n'
@@ -116,6 +116,29 @@ table.insert(M.testcases, {
         content = util.readfile '.jdbrc'
         t.assert_eq(content, '')
         assert(not t.sign_exists('brk', 10), 'sign still placed at line 10')
+    end,
+})
+
+table.insert(M.testcases, {
+    desc = 'Toggle a ghci breakpoint',
+    fn = function()
+        vim.cmd [[edit tests/files/hs/Main.hs]]
+
+        -- Add breakpoint
+        initfile.toggle_breakpoint(DebuggerType.GHCI, 17)
+
+        local content = util.readfile '.ghci-init'
+        local expected = '-- Main tests/files/hs/Main.hs:17\n'
+            .. ':break Main 17\n'
+        t.assert_eq(content, expected)
+        assert(t.sign_exists('brk', 17), 'no sign placed at line 17')
+
+        -- Remove breakpoint
+        initfile.toggle_breakpoint(DebuggerType.GHCI, 17)
+
+        content = util.readfile '.ghci-init'
+        t.assert_eq(content, '')
+        assert(not t.sign_exists('brk', 17), 'sign still placed at line 17')
     end,
 })
 

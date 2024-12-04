@@ -5,6 +5,8 @@ BRK_NVIM="$PWD"
 if [ $# = 0 ]; then
     TESTS=(tests/*_test.lua)
 else
+    # shellcheck disable=SC2178
+    # shellcheck disable=SC2124
     TESTS=$@
 fi
 
@@ -29,4 +31,3 @@ if [ -n "$DEBUG" ]; then
 else
     nvim -es --headless --noplugin -u ./tests/init.lua -c "RunTests ${TESTS[*]}"
 fi
-
