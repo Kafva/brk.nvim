@@ -28,8 +28,18 @@ end
 -- A non-ambiguous filepath is needed for delve
 -- gdb does not like leading './'
 ---@param debugger_type DebuggerType
----@param file string
+---@param file string?
 local function get_filepath(debugger_type, file)
+    if file == nil then
+        error "Missing 'file' argument"
+    end
+    -- Strip PWD prefix if present, needed to load breakpoints correctly
+    -- when files are added with their absolute path
+    local prefix = vim.fn.getcwd() .. '/'
+    if vim.startswith(file, prefix) then
+        file = file:sub(#prefix + 1)
+    end
+
     if debugger_type == DebuggerType.DELVE then
         return (vim.startswith(file, '/') or vim.startswith(file, './'))
                 and file
@@ -221,7 +231,6 @@ local function reload_breakpoint_signs(debugger_type)
         end
         local file = breakpoint.file
         local lnum = breakpoint.lnum
-        ---@diagnostic disable-next-line: param-type-mismatch
         if get_filepath(debugger_type, vim.fn.expand '%') == file then
             local sign_name = breakpoint.condition ~= nil
                     and 'BrkConditionalBreakpoint'
