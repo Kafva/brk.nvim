@@ -48,8 +48,9 @@ function M.toggle_breakpoint(filetype, lnum)
 
     vim.api.nvim_buf_set_text(0, lnum - 1, 0, lnum - 1, 0, new_lines)
 
-    -- Move cursor back up to the line with the breakpoint
+    -- Move cursor back up to the line with the breakpoint and save
     vim.cmd 'normal! k'
+    vim.cmd 'write'
 end
 
 -- Only lists breakpoints in open buffers
