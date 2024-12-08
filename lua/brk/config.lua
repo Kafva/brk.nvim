@@ -9,26 +9,6 @@ DebuggerType = {
     GHCI = 'ghci',
 }
 
----@class Breakpoint
----@field file string
----@field lnum number
----@field name string?
----@field symbol string?
----@field condition string?
-
----@class BrkOptions
----@field default_bindings? boolean Enable default bindings
----@field auto_start? table<string, boolean> Determine if the initfile should append an autorun command for each filetype
----@field preferred_debugger_format? DebuggerType
----@field breakpoint_sign? string
----@field conditional_breakpoint_sign? string
----@field breakpoint_color? string
----@field conditional_breakpoint_color? string
----@field initfile_paths? table<DebuggerType, string>
----@field initfile_filetypes? string[]
----@field inline_cmds? table<string, string>
----@field inline_filetypes? string[]
-
 ---@type BrkOptions
 M.default_opts = {
     default_bindings = true,
@@ -62,11 +42,22 @@ M.default_opts = {
         'cpp',
         'objc',
         'rust',
-        'go',
         'swift',
+        'go',
         'java',
         'kotlin',
         'haskell',
+    },
+    initfile_supported = {
+        ['c'] = { DebuggerType.LLDB, DebuggerType.GDB },
+        ['objc'] = { DebuggerType.LLDB, DebuggerType.GDB },
+        ['cpp'] = { DebuggerType.LLDB, DebuggerType.GDB },
+        ['rust'] = { DebuggerType.LLDB, DebuggerType.GDB },
+        ['swift'] = { DebuggerType.LLDB, DebuggerType.GDB },
+        ['go'] = { DebuggerType.DELVE },
+        ['java'] = { DebuggerType.JDB },
+        ['kotlin'] = { DebuggerType.JDB },
+        ['haskell'] = { DebuggerType.GHCI },
     },
     inline_filetypes = {
         'python',
@@ -79,6 +70,24 @@ M.default_opts = {
         python = "__import__('pdb').set_trace()",
         ruby = "require 'debug'; debugger",
         -- go = "runtime.Breakpoint()"
+    },
+    autocmd_pattern = {
+        '*.c',
+        '*.cpp',
+        '*.cc',
+        '*.h',
+        '*.hh',
+        '*.hpp',
+        '*.m',
+        '*.rs',
+        '*.swift',
+        '*.go',
+        '*.java',
+        '*.kt',
+        '*.hs',
+        '*.py',
+        '*.rb',
+        '*.lua',
     },
 }
 

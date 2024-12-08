@@ -382,11 +382,10 @@ table.insert(M.testcases, {
 table.insert(M.testcases, {
     desc = 'Popover navigation to another open buffer',
     fn = function()
-        vim.cmd [[edit tests/files/py/main.go]]
-        vim.cmd [[edit tests/files/py/util.go]]
+        vim.cmd [[edit tests/files/go/main.go]]
+        vim.cmd [[edit tests/files/go/util.go]]
 
         -- Add a breakpoint in both files
-        -- Add breakpoints
         vim.cmd [[b tests/files/go/main.go]]
         initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
         vim.cmd [[b tests/files/go/util.go]]
@@ -400,6 +399,37 @@ table.insert(M.testcases, {
 
         t.assert_eq(vim.fn.expand '%', 'tests/files/go/main.go')
         t.assert_eq(vim.fn.line '.', 22)
+    end,
+})
+
+table.insert(M.testcases, {
+    desc = 'Switching to a different filetype reloads breakpoints',
+    fn = function()
+        local breakpoints
+        vim.cmd [[edit tests/files/hs/Main.hs]]
+        vim.cmd [[edit tests/files/go/main.go]]
+
+        -- Add a breakpoint in both files
+        vim.cmd [[b tests/files/hs/Main.hs]]
+        initfile.toggle_breakpoint(DebuggerType.GHCI, 19)
+        vim.cmd [[b tests/files/go/main.go]]
+        initfile.toggle_breakpoint(DebuggerType.DELVE, 15)
+
+        -- Go back to the first file and verify the list of breakpoints
+        vim.cmd [[b tests/files/hs/Main.hs]]
+        breakpoints = initfile.get_breakpoints()
+        t.assert_eq(#breakpoints, 1)
+        t.assert_eq(breakpoints[1].file, 'tests/files/hs/Main.hs')
+        t.assert_eq(breakpoints[1].lnum, 19)
+        t.assert_eq(breakpoints[1].name, 'Main19')
+
+        -- Go back to the second file and verify the list of breakpoints
+        vim.cmd [[b tests/files/go/main.go]]
+        breakpoints = initfile.get_breakpoints()
+        t.assert_eq(#breakpoints, 1)
+        t.assert_eq(breakpoints[1].file, './tests/files/go/main.go')
+        t.assert_eq(breakpoints[1].lnum, 15)
+        t.assert_eq(breakpoints[1].name, 'testsfilesgomaingo15')
     end,
 })
 

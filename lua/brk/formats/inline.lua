@@ -53,14 +53,12 @@ function M.toggle_breakpoint(filetype, lnum)
     vim.cmd 'write'
 end
 
--- Only lists breakpoints in open buffers
+-- Only returns breakpoints in open buffers
 ---@param filetype string
-function M.list_breakpoints(filetype)
-    local header = '  ' .. filetype .. '\n'
+function M.get_breakpoints(filetype)
     local breakpoints = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-
         for i, line in ipairs(lines) do
             if vim.trim(line) == config.inline_cmds[filetype] then
                 local breakpoint = {
@@ -71,6 +69,13 @@ function M.list_breakpoints(filetype)
             end
         end
     end
+    return breakpoints
+end
+
+---@param filetype string
+function M.list_breakpoints(filetype)
+    local header = '  ' .. filetype .. '\n'
+    local breakpoints = M.get_breakpoints(filetype)
     popover.open_breakpoints_popover(breakpoints, header)
 end
 

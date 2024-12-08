@@ -8,6 +8,7 @@ local M = {}
 function M.load_breakpoints(filetype)
     if vim.tbl_contains(config.initfile_filetypes, filetype) then
         local debugger_type = initfile.get_debugger_type(filetype)
+        -- vim.notify("Loading:" .. filetype .. " [" ..  debugger_type .. "]", vim.log.levels.TRACE)
         initfile.load_breakpoints(debugger_type)
     elseif vim.tbl_contains(config.inline_filetypes, filetype) then
         inline.load_breakpoints()
@@ -125,21 +126,39 @@ function M.list_breakpoints()
     end
 end
 
+function M.get_breakpoints()
+    local filetype = vim.bo.filetype
+
+    if vim.tbl_contains(config.initfile_filetypes, filetype) then
+        return initfile.get_breakpoints()
+    elseif vim.tbl_contains(config.inline_filetypes, filetype) then
+        return inline.get_breakpoints(filetype)
+    else
+        vim.notify(
+            "No support for filetype: '" .. filetype .. "'",
+            vim.log.levels.WARN
+        )
+    end
+end
+
 ---@param user_opts BrkOptions?
 function M.setup(user_opts)
     config.setup(user_opts)
 
-    -- Load breakpoints for each FileType event
-    vim.api.nvim_create_autocmd('Filetype', {
-        pattern = config.filetypes,
-        callback = function(ev)
-            M.load_breakpoints(ev.match)
+    -- (Re)load breakpoints for each BufEnter event.
+    -- The 'Filetype' event does not re-trigger when switching buffers,
+    -- we need 'BufEnter' to make sure that the breakpoint list is up-to-date
+    -- with the current file.
+    vim.api.nvim_create_autocmd('BufEnter', {
+        pattern = config.autocmd_pattern,
+        callback = function()
+            M.load_breakpoints(vim.bo.filetype)
         end,
     })
 
     -- Update breakpoint locations whenever a file is updated
     vim.api.nvim_create_autocmd('BufWritePost', {
-        pattern = { '*' },
+        pattern = config.autocmd_pattern,
         callback = function()
             if vim.tbl_contains(config.filetypes, vim.bo.filetype) then
                 M.update_breakpoints(vim.bo.filetype)

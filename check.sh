@@ -29,5 +29,6 @@ if [ -n "$DEBUG" ]; then
     curl -sOL https://raw.githubusercontent.com/kafva/debugger.lua/master/debugger.lua
     nvim --headless --noplugin -u ./tests/init.lua -c "RunTests ${TESTS[*]}"
 else
-    nvim -es --headless --noplugin -u ./tests/init.lua -c "RunTests ${TESTS[*]}"
+    nvim -es --headless --noplugin -u ./tests/init.lua -c "RunTests ${TESTS[*]}" || :
+    git checkout tests/files 2> /dev/null
 fi

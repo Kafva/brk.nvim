@@ -487,16 +487,16 @@ end
 ---@param filetype string
 ---@return DebuggerType
 function M.get_debugger_type(filetype)
-    if filetype == 'go' then
-        return DebuggerType.DELVE
-    elseif filetype == 'java' or filetype == 'kotlin' then
-        return DebuggerType.JDB
-    elseif filetype == 'haskell' then
-        return DebuggerType.GHCI
+    local supported_debuggers = config.initfile_supported[filetype]
+    if #supported_debuggers == 1 then
+        return supported_debuggers[1]
     end
 
     for debugger_type, initfile_path in pairs(config.initfile_paths) do
-        if vim.fn.filereadable(initfile_path) == 1 then
+        if
+            vim.tbl_contains(supported_debuggers, debugger_type)
+            and vim.fn.filereadable(initfile_path) == 1
+        then
             return debugger_type
         end
     end
@@ -677,6 +677,10 @@ function M.toggle_symbol_breakpoint(debugger_type, user_symbol)
     end
 
     write_breakpoints_to_file(debugger_type)
+end
+
+function M.get_breakpoints()
+    return vim.deepcopy(breakpoints)
 end
 
 function M.list_breakpoints()
