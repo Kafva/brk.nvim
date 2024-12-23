@@ -32,7 +32,7 @@ runhaskell tests/files/hs/Main.hs
 ```
 
 The toggle breakpoint function is also setup to insert inline breakpoints for
-debuggers in the following languages:
+debuggers in some languages, e.g.
 
 * [pdb](https://docs.python.org/3/library/pdb.html) for Python
 * [kafva/debugger.lua](https://github.com/kafva/debugger.lua) for Lua

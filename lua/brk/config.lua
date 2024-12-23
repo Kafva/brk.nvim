@@ -63,12 +63,16 @@ M.default_opts = {
         'python',
         'ruby',
         'lua',
+        'javascript',
+        'typescript'
         -- 'go'
     },
     inline_cmds = {
         lua = "require'debugger'() -- Set DBG_REMOTEPORT=8777 for remote debugging",
         python = "__import__('pdb').set_trace()",
         ruby = "require 'debug'; debugger",
+        javascript = 'debugger',
+        typescript = 'debugger',
         -- go = "runtime.Breakpoint()"
     },
     autocmd_pattern = {
