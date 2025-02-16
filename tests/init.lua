@@ -64,13 +64,11 @@ function M.run_test(testfile)
     io.write('=== Module: ' .. modpath .. '\n')
 
     for _, tc in pairs(testmod.testcases) do
-        io.write(tc.desc .. ': ')
-        io.flush()
         testmod.before_each()
         local testcase_ok, errmsg = pcall(tc.fn)
-        local status = testcase_ok and (COLOR_GREEN .. 'OK' .. COLOR_RESET)
+        local status = testcase_ok and (COLOR_GREEN .. ' OK ' .. COLOR_RESET)
             or (COLOR_RED .. 'FAIL' .. COLOR_RESET)
-        io.write(status .. '\n')
+        io.write(string.format("[ %s ] %s\n", status, tc.desc))
         io.flush()
 
         if not testcase_ok then
