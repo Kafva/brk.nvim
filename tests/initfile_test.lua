@@ -36,7 +36,6 @@ table.insert(M.testcases, {
 
         local content = util.readfile '.lldbinit'
         local expected = 'breakpoint set --file tests/files/c/main.c --line 9\n'
-            .. 'run\n'
         t.assert_eq(content, expected)
         assert(t.sign_exists('brk', 9), 'no sign placed at line 9')
 
@@ -153,8 +152,7 @@ table.insert(M.testcases, {
         local content = util.readfile '.lldbinit'
         t.assert_eq(
             'breakpoint set --file tests/files/c/main.c --line 6 '
-                .. "--condition 'i == 2'\n"
-                .. 'run\n',
+                .. "--condition 'i == 2'\n",
             content
         )
         assert(t.sign_exists('brk', 6), 'no sign placed at line 6')
@@ -363,8 +361,7 @@ table.insert(M.testcases, {
         local content = util.readfile '.lldbinit'
         t.assert_eq(
             'breakpoint set --file tests/files/c/main.c --line 10\n'
-                .. 'breakpoint set -n printf\n'
-                .. 'run\n',
+                .. 'breakpoint set -n printf\n',
             content
         )
 
@@ -373,7 +370,7 @@ table.insert(M.testcases, {
 
         content = util.readfile '.lldbinit'
         t.assert_eq(
-            'breakpoint set --file tests/files/c/main.c --line 10\n' .. 'run\n',
+            'breakpoint set --file tests/files/c/main.c --line 10\n',
             content
         )
     end,

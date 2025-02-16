@@ -207,7 +207,6 @@ local function write_breakpoints_to_file(debugger_type)
                 content = content .. 'resume\n'
             elseif
                 debugger_type == DebuggerType.GDB
-                or debugger_type == DebuggerType.LLDB
             then
                 content = content .. 'run\n'
             end
