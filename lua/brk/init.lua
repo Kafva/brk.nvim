@@ -152,6 +152,9 @@ function M.setup(user_opts)
     vim.api.nvim_create_autocmd('BufEnter', {
         pattern = config.autocmd_pattern,
         callback = function()
+            if vim.api.nvim_get_option_value("buftype", {buf = 0}) == 'nofile' then
+                return
+            end
             M.load_breakpoints(vim.bo.filetype)
         end,
     })
