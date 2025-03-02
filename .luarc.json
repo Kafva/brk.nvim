@@ -13,6 +13,7 @@
       "/opt/homebrew/share/lua/5.4",
       "/opt/homebrew/lib/lua/5.4",
       "${3rd}/luv/library",
-      "${3rd}/luassert/library"
+      "${3rd}/luassert/library",
+      "./tests/tsst.nvim/lua"
   ]
 }
