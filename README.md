@@ -67,10 +67,11 @@ require 'brk'.setup {
 Commands:
 * `BrkReload`: Reload debugger init file
 
-To run unit tests (set `DEBUG=1` to debug failures)
+To run unit tests:
 ```bash
 ./check.sh
 ```
+Pass `-d` and a specific test file to debug failures.
 
 ## Tips
 

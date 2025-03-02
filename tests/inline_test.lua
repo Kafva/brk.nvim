@@ -2,10 +2,10 @@ require('brk').setup {}
 
 local M = {}
 
+local tsst = require 'tsst'
 local config = require 'brk.config'
 local popover = require 'brk.popover'
 local inline = require 'brk.formats.inline'
-local t = require 'tests.init'
 
 M.testcases = {}
 
@@ -32,12 +32,12 @@ table.insert(M.testcases, {
         inline.toggle_breakpoint('python', lnum)
         local current_line =
             vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
-        t.assert_eq(vim.trim(current_line), config.inline_cmds['python'])
+        tsst.assert_eq(vim.trim(current_line), config.inline_cmds['python'])
 
         -- Remove breakpoint (on line above initial target line)
         inline.toggle_breakpoint('python', lnum)
         current_line = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
-        t.assert_eq(current_line, original_content)
+        tsst.assert_eq(current_line, original_content)
     end,
 })
 
@@ -57,7 +57,7 @@ table.insert(M.testcases, {
 
         current_line =
             vim.api.nvim_buf_get_lines(0, main_lnum - 1, main_lnum, true)[1]
-        t.assert_eq(vim.trim(current_line), config.inline_cmds['python'])
+        tsst.assert_eq(vim.trim(current_line), config.inline_cmds['python'])
 
         vim.cmd [[b tests/files/py/util.py]]
         vim.api.nvim_win_set_cursor(0, { util_lnum, 0 })
@@ -65,7 +65,7 @@ table.insert(M.testcases, {
 
         current_line =
             vim.api.nvim_buf_get_lines(0, util_lnum - 1, util_lnum, true)[1]
-        t.assert_eq(vim.trim(current_line), config.inline_cmds['python'])
+        tsst.assert_eq(vim.trim(current_line), config.inline_cmds['python'])
 
         inline.list_breakpoints 'python'
 
@@ -73,8 +73,8 @@ table.insert(M.testcases, {
         vim.api.nvim_win_set_cursor(0, { 2, 0 })
         popover.goto_breakpoint()
 
-        t.assert_eq(vim.fn.expand '%', 'tests/files/py/main.py')
-        t.assert_eq(vim.fn.line '.', 12)
+        tsst.assert_eq(vim.fn.expand '%', 'tests/files/py/main.py')
+        tsst.assert_eq(vim.fn.line '.', 12)
     end,
 })
 

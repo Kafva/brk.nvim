@@ -8,6 +8,7 @@ debugger.lua
 .jdbrc
 .ghci
 .ghci-init
+tests/tsst.nvim
 
 # Go
 __debug_bin*
