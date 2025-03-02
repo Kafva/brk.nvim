@@ -46,14 +46,14 @@ table.insert(M.testcases, {
 
         local content = util.readfile '.lldbinit'
         local expected = 'breakpoint set --file tests/files/c/main.c --line 9\n'
-        tsst.assert_eq(content, expected)
+        tsst.assert_eql(expected, content)
         assert(sign_exists('brk', 9), 'no sign placed at line 9')
 
         -- Remove breakpoint
         initfile.toggle_breakpoint(DebuggerType.LLDB, 9)
 
         content = util.readfile '.lldbinit'
-        tsst.assert_eq(content, '')
+        tsst.assert_eql('', content)
         assert(not sign_exists('brk', 9), 'sign still placed at line 9')
     end,
 })
@@ -68,14 +68,14 @@ table.insert(M.testcases, {
 
         local content = util.readfile '.gdbinit'
         local expected = 'break tests/files/c/main.c:7\n' .. 'run\n'
-        tsst.assert_eq(content, expected)
+        tsst.assert_eql(expected, content)
         assert(sign_exists('brk', 7), 'no sign placed at line 7')
 
         -- Remove breakpoint
         initfile.toggle_breakpoint(DebuggerType.GDB, 7)
 
         content = util.readfile '.gdbinit'
-        tsst.assert_eq(content, '')
+        tsst.assert_eql('', content)
         assert(not sign_exists('brk', 7), 'sign still placed at line 7')
     end,
 })
@@ -91,14 +91,14 @@ table.insert(M.testcases, {
         local content = util.readfile '.dlvinit'
         local expected = 'break testsfilesgomaingo22 ./tests/files/go/main.go:22\n'
             .. 'continue\n'
-        tsst.assert_eq(content, expected)
+        tsst.assert_eql(expected, content)
         assert(sign_exists('brk', 22), 'no sign placed at line 22')
 
         -- Remove breakpoint
         initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
 
         content = util.readfile '.dlvinit'
-        tsst.assert_eq(content, '')
+        tsst.assert_eql('', content)
         assert(not sign_exists('brk', 22), 'sign still placed at line 22')
     end,
 })
@@ -116,14 +116,14 @@ table.insert(M.testcases, {
             .. 'stop in org.myapp.Main:10\n'
             .. 'repeat on\n'
             .. 'resume\n'
-        tsst.assert_eq(content, expected)
+        tsst.assert_eql(expected, content)
         assert(sign_exists('brk', 10), 'no sign placed at line 10')
 
         -- Remove breakpoint
         initfile.toggle_breakpoint(DebuggerType.JDB, 10)
 
         content = util.readfile '.jdbrc'
-        tsst.assert_eq(content, '')
+        tsst.assert_eql('', content)
         assert(not sign_exists('brk', 10), 'sign still placed at line 10')
     end,
 })
@@ -139,14 +139,14 @@ table.insert(M.testcases, {
         local content = util.readfile '.ghci-init'
         local expected = '-- Main tests/files/hs/Main.hs:17\n'
             .. ':break Main 17\n'
-        tsst.assert_eq(content, expected)
+        tsst.assert_eql(expected, content)
         assert(sign_exists('brk', 17), 'no sign placed at line 17')
 
         -- Remove breakpoint
         initfile.toggle_breakpoint(DebuggerType.GHCI, 17)
 
         content = util.readfile '.ghci-init'
-        tsst.assert_eq(content, '')
+        tsst.assert_eql('', content)
         assert(not sign_exists('brk', 17), 'sign still placed at line 17')
     end,
 })
@@ -160,7 +160,7 @@ table.insert(M.testcases, {
         initfile.toggle_conditional_breakpoint(DebuggerType.LLDB, 6, 'i == 2')
 
         local content = util.readfile '.lldbinit'
-        tsst.assert_eq(
+        tsst.assert_eql(
             'breakpoint set --file tests/files/c/main.c --line 6 '
                 .. "--condition 'i == 2'\n",
             content
@@ -171,7 +171,7 @@ table.insert(M.testcases, {
         initfile.toggle_breakpoint(DebuggerType.LLDB, 6)
 
         content = util.readfile '.lldbinit'
-        tsst.assert_eq('', content)
+        tsst.assert_eql(content, '')
         assert(not sign_exists('brk', 6), 'sign still placed at line 6')
     end,
 })
@@ -185,7 +185,7 @@ table.insert(M.testcases, {
         initfile.toggle_conditional_breakpoint(DebuggerType.GDB, 6, 'i == 3')
 
         local content = util.readfile '.gdbinit'
-        tsst.assert_eq(
+        tsst.assert_eql(
             'break tests/files/c/main.c:6 if i == 3\n' .. 'run\n',
             content
         )
@@ -195,7 +195,7 @@ table.insert(M.testcases, {
         initfile.toggle_breakpoint(DebuggerType.GDB, 6)
 
         content = util.readfile '.gdbinit'
-        tsst.assert_eq('', content)
+        tsst.assert_eql(content, '')
         assert(not sign_exists('brk', 6), 'sign still placed at line 6')
     end,
 })
@@ -209,7 +209,7 @@ table.insert(M.testcases, {
         initfile.toggle_conditional_breakpoint(DebuggerType.DELVE, 22, 'true')
 
         local content = util.readfile '.dlvinit'
-        tsst.assert_eq(
+        tsst.assert_eql(
             'break testsfilesgomaingo22 ./tests/files/go/main.go:22\n'
                 .. 'cond testsfilesgomaingo22 true\n'
                 .. 'continue\n',
@@ -221,7 +221,7 @@ table.insert(M.testcases, {
         initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
 
         content = util.readfile '.dlvinit'
-        tsst.assert_eq('', content)
+        tsst.assert_eql(content, '')
         assert(not sign_exists('brk', 22), 'sign still placed at line 22')
     end,
 })
@@ -235,7 +235,7 @@ table.insert(M.testcases, {
         initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
 
         local content = util.readfile '.dlvinit'
-        tsst.assert_eq(
+        tsst.assert_eql(
             'break testsfilesgomaingo22 ./tests/files/go/main.go:22\n'
                 .. 'continue\n',
             content
@@ -256,7 +256,7 @@ table.insert(M.testcases, {
         content = util.readfile '.dlvinit'
         local expected = 'break testsfilesgomaingo26 ./tests/files/go/main.go:26\n'
             .. 'continue\n'
-        tsst.assert_eq(expected, content)
+        tsst.assert_eql(content, expected)
         assert(sign_exists('brk', 26), 'no sign placed at line 26')
 
         -- Cleanup on success
@@ -274,7 +274,7 @@ table.insert(M.testcases, {
         initfile.toggle_breakpoint(DebuggerType.DELVE, 22)
 
         local content = util.readfile '.dlvinit'
-        tsst.assert_eq(
+        tsst.assert_eql(
             'break testsfilesgomaingo22 ./tests/files/go/main.go:22\n'
                 .. 'continue\n',
             content
@@ -288,7 +288,7 @@ table.insert(M.testcases, {
 
         -- Breakpoint should be removed
         content = util.readfile '.dlvinit'
-        tsst.assert_eq('', content)
+        tsst.assert_eql(content, '')
 
         -- Cleanup on success
         vim.system({ 'git', 'checkout', 'tests/files' }):wait()
@@ -308,7 +308,7 @@ table.insert(M.testcases, {
         initfile.toggle_breakpoint(DebuggerType.DELVE, 13)
 
         local content = util.readfile '.dlvinit'
-        tsst.assert_eq(
+        tsst.assert_eql(
             'break testsfilesgomaingo22 ./tests/files/go/main.go:22\n'
                 .. 'break testsfilesgoutilgo13 ./tests/files/go/util.go:13\n'
                 .. 'continue\n',
@@ -342,7 +342,7 @@ table.insert(M.testcases, {
 
         -- Breakpoint should now be at lines 26 and 17
         content = util.readfile '.dlvinit'
-        tsst.assert_eq(
+        tsst.assert_eql(
             'break testsfilesgomaingo26 ./tests/files/go/main.go:26\n'
                 .. 'break testsfilesgoutilgo17 ./tests/files/go/util.go:17\n'
                 .. 'continue\n',
@@ -369,7 +369,7 @@ table.insert(M.testcases, {
         initfile.toggle_symbol_breakpoint(DebuggerType.LLDB, 'printf')
 
         local content = util.readfile '.lldbinit'
-        tsst.assert_eq(
+        tsst.assert_eql(
             'breakpoint set --file tests/files/c/main.c --line 10\n'
                 .. 'breakpoint set -n printf\n',
             content
@@ -379,7 +379,7 @@ table.insert(M.testcases, {
         initfile.toggle_symbol_breakpoint(DebuggerType.LLDB, 'printf')
 
         content = util.readfile '.lldbinit'
-        tsst.assert_eq(
+        tsst.assert_eql(
             'breakpoint set --file tests/files/c/main.c --line 10\n',
             content
         )
@@ -404,8 +404,8 @@ table.insert(M.testcases, {
         vim.api.nvim_win_set_cursor(0, { 2, 0 })
         popover.goto_breakpoint()
 
-        tsst.assert_eq(vim.fn.expand '%', 'tests/files/go/main.go')
-        tsst.assert_eq(vim.fn.line '.', 22)
+        tsst.assert_eql('tests/files/go/main.go', vim.fn.expand '%')
+        tsst.assert_eql(22, vim.fn.line '.')
     end,
 })
 
@@ -425,18 +425,18 @@ table.insert(M.testcases, {
         -- Go back to the first file and verify the list of breakpoints
         vim.cmd [[b tests/files/hs/Main.hs]]
         breakpoints = initfile.get_breakpoints()
-        tsst.assert_eq(#breakpoints, 1)
-        tsst.assert_eq(breakpoints[1].file, 'tests/files/hs/Main.hs')
-        tsst.assert_eq(breakpoints[1].lnum, 19)
-        tsst.assert_eq(breakpoints[1].name, 'Main19')
+        tsst.assert_eql(1, #breakpoints)
+        tsst.assert_eql('tests/files/hs/Main.hs', breakpoints[1].file)
+        tsst.assert_eql(19, breakpoints[1].lnum)
+        tsst.assert_eql('Main19', breakpoints[1].name)
 
         -- Go back to the second file and verify the list of breakpoints
         vim.cmd [[b tests/files/go/main.go]]
         breakpoints = initfile.get_breakpoints()
-        tsst.assert_eq(#breakpoints, 1)
-        tsst.assert_eq(breakpoints[1].file, './tests/files/go/main.go')
-        tsst.assert_eq(breakpoints[1].lnum, 15)
-        tsst.assert_eq(breakpoints[1].name, 'testsfilesgomaingo15')
+        tsst.assert_eql(1, #breakpoints)
+        tsst.assert_eql('./tests/files/go/main.go', breakpoints[1].file)
+        tsst.assert_eql(15, breakpoints[1].lnum)
+        tsst.assert_eql('testsfilesgomaingo15', breakpoints[1].name)
     end,
 })
 

@@ -32,12 +32,12 @@ table.insert(M.testcases, {
         inline.toggle_breakpoint('python', lnum)
         local current_line =
             vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
-        tsst.assert_eq(vim.trim(current_line), config.inline_cmds['python'])
+        tsst.assert_eql(config.inline_cmds['python'], vim.trim(current_line))
 
         -- Remove breakpoint (on line above initial target line)
         inline.toggle_breakpoint('python', lnum)
         current_line = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
-        tsst.assert_eq(current_line, original_content)
+        tsst.assert_eql(original_content, current_line)
     end,
 })
 
@@ -57,7 +57,7 @@ table.insert(M.testcases, {
 
         current_line =
             vim.api.nvim_buf_get_lines(0, main_lnum - 1, main_lnum, true)[1]
-        tsst.assert_eq(vim.trim(current_line), config.inline_cmds['python'])
+        tsst.assert_eql(config.inline_cmds['python'], vim.trim(current_line))
 
         vim.cmd [[b tests/files/py/util.py]]
         vim.api.nvim_win_set_cursor(0, { util_lnum, 0 })
@@ -65,7 +65,7 @@ table.insert(M.testcases, {
 
         current_line =
             vim.api.nvim_buf_get_lines(0, util_lnum - 1, util_lnum, true)[1]
-        tsst.assert_eq(vim.trim(current_line), config.inline_cmds['python'])
+        tsst.assert_eql(config.inline_cmds['python'], vim.trim(current_line))
 
         inline.list_breakpoints 'python'
 
@@ -73,8 +73,8 @@ table.insert(M.testcases, {
         vim.api.nvim_win_set_cursor(0, { 2, 0 })
         popover.goto_breakpoint()
 
-        tsst.assert_eq(vim.fn.expand '%', 'tests/files/py/main.py')
-        tsst.assert_eq(vim.fn.line '.', 12)
+        tsst.assert_eql('tests/files/py/main.py', vim.fn.expand '%')
+        tsst.assert_eql(12, vim.fn.line '.')
     end,
 })
 
