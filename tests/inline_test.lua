@@ -6,18 +6,13 @@ local tsst = require('tsst')
 local config = require('brk.config')
 local popover = require('brk.popover')
 local inline = require('brk.formats.inline')
+local fixture = require('tests.fixture')
 
 M.testcases = {}
 
 M.before_each = function()
     inline.delete_all_breakpoints()
-
-    -- Close all open files
-    repeat
-        vim.cmd([[bd!]])
-    until vim.fn.expand('%') == ''
-
-    vim.system({ 'git', 'checkout', 'tests/files' }):wait()
+    fixture.before_each()
 end
 
 table.insert(M.testcases, {

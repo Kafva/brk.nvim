@@ -1,7 +1,7 @@
 ---@type uv
 local uv = vim.uv
 
-M = {}
+local M = {}
 
 -- Open the selected path in a buffer, using 'b' allows us to
 -- switch to the buffer even if it is 'modified'.

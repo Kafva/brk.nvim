@@ -1,22 +1,15 @@
 require('brk').setup({})
 
-M = {}
+local M = {}
 
 local tsst = require('tsst')
 local initfile = require('brk.formats.initfile')
 local util = require('brk.util')
 local config = require('brk.config')
 local popover = require('brk.popover')
+local fixture = require('tests.fixture')
 
----@param group string
----@param lnum number
----@return boolean
-local function sign_exists(group, lnum)
-    local buf = vim.api.nvim_get_current_buf()
-    local bufsigns =
-        vim.fn.sign_getplaced(buf, { group = group, lnum = tostring(lnum) })
-    return #bufsigns > 0 and #bufsigns[1].signs > 0
-end
+local sign_exists = fixture.sign_exists
 
 M.before_each = function()
     -- Delete all breakpoints and initfiles from prior runs
@@ -25,13 +18,7 @@ M.before_each = function()
         tsst.rm_f(config.default_opts.initfile_paths[dbg])
     end
 
-    -- Close all open files
-    repeat
-        vim.cmd([[bd!]])
-    until vim.fn.expand('%') == ''
-
-    -- Restore files
-    vim.system({ 'git', 'checkout', 'tests/files' }):wait()
+    fixture.before_each()
 end
 
 M.testcases = {}

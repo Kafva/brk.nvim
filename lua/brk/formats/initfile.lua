@@ -5,7 +5,7 @@ local popover = require('brk.popover')
 ---@type uv
 local uv = vim.uv
 
-M = {}
+local M = {}
 
 ---@type Breakpoint[]
 local breakpoints = {}
