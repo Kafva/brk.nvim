@@ -1,5 +1,3 @@
-# vi: ft=gitignore
-
 debugger.lua
 .testenv
 .gdbinit
@@ -28,8 +26,6 @@ build
 *.rej
 
 # macOS
-Music Library.musiclibrary
-Media.localized
 .localized
 .DS_Store
 _DS_Store
