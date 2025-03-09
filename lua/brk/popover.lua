@@ -1,6 +1,6 @@
 M = {}
 
-local util = require 'brk.util'
+local util = require('brk.util')
 
 ---@param lines table<string>
 ---@param ft string
@@ -55,7 +55,7 @@ function M.goto_breakpoint()
     end
 
     -- Quit out of the popover and move to the selected location
-    vim.cmd 'q'
+    vim.cmd('q')
 
     util.openfile(bufpath)
     vim.cmd(tostring(linenr))

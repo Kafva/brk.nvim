@@ -67,7 +67,7 @@ M.default_opts = {
         'ruby',
         'lua',
         'javascript',
-        'typescript'
+        'typescript',
         -- 'go'
     },
     inline_cmds = {

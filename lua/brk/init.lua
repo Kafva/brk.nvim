@@ -1,6 +1,6 @@
-local config = require 'brk.config'
-local initfile = require 'brk.formats.initfile'
-local inline = require 'brk.formats.inline'
+local config = require('brk.config')
+local initfile = require('brk.formats.initfile')
+local inline = require('brk.formats.inline')
 
 local M = {}
 
@@ -57,7 +57,7 @@ end
 
 ---@param user_lnum number
 function M.toggle_breakpoint(user_lnum)
-    local lnum = user_lnum or vim.fn.line '.'
+    local lnum = user_lnum or vim.fn.line('.')
     local filetype = vim.bo.filetype
 
     if vim.tbl_contains(config.initfile_filetypes, filetype) then
@@ -91,7 +91,7 @@ end
 ---@param user_lnum number
 ---@param user_condition string?
 function M.toggle_conditional_breakpoint(user_lnum, user_condition)
-    local lnum = user_lnum or vim.fn.line '.'
+    local lnum = user_lnum or vim.fn.line('.')
     local filetype = vim.bo.filetype
 
     if vim.tbl_contains(config.initfile_filetypes, filetype) then
@@ -152,7 +152,10 @@ function M.setup(user_opts)
     vim.api.nvim_create_autocmd('BufEnter', {
         pattern = config.autocmd_pattern,
         callback = function()
-            if vim.api.nvim_get_option_value("buftype", {buf = 0}) == 'nofile' then
+            if
+                vim.api.nvim_get_option_value('buftype', { buf = 0 })
+                == 'nofile'
+            then
                 return
             end
             M.load_breakpoints(vim.bo.filetype)

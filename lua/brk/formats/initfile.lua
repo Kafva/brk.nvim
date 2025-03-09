@@ -1,6 +1,6 @@
-local util = require 'brk.util'
-local config = require 'brk.config'
-local popover = require 'brk.popover'
+local util = require('brk.util')
+local config = require('brk.config')
+local popover = require('brk.popover')
 
 ---@type uv
 local uv = vim.uv
@@ -13,7 +13,7 @@ local breakpoints = {}
 -- Automatically save the current buffer before changing breakpoint placements
 local function save_buffer()
     local ok, err = pcall(function()
-        vim.cmd 'silent write'
+        vim.cmd('silent write')
     end)
     if not ok then
         vim.notify(
@@ -31,7 +31,7 @@ end
 ---@param file string?
 local function get_filepath(debugger_type, file)
     if file == nil then
-        error "Missing 'file' argument"
+        error("Missing 'file' argument")
     end
     -- Strip PWD prefix if present, needed to load breakpoints correctly
     -- when files are added with their absolute path
@@ -125,11 +125,13 @@ local function breakpoint_tostring(debugger_type, breakpoint)
             -- Determine the class name from the filepath where the new
             -- breakpoint is being placed
             -- XXX: Assumes class path starts under 'java/' or 'kotlin/'
-            local class_path =
-                breakpoint.file:match '[-_a-zA-Z0-9./]+/java/([-_a-zA-Z0-9./]+)'
+            local class_path = breakpoint.file:match(
+                '[-_a-zA-Z0-9./]+/java/([-_a-zA-Z0-9./]+)'
+            )
             if class_path == nil then
-                class_path =
-                    breakpoint.file:match '[-_a-zA-Z0-9./]+/kotlin/([-_a-zA-Z0-9./]+)'
+                class_path = breakpoint.file:match(
+                    '[-_a-zA-Z0-9./]+/kotlin/([-_a-zA-Z0-9./]+)'
+                )
             end
             if class_path == nil then
                 error(
@@ -205,9 +207,7 @@ local function write_breakpoints_to_file(debugger_type)
                 content = content .. 'continue\n'
             elseif debugger_type == DebuggerType.JDB then
                 content = content .. 'resume\n'
-            elseif
-                debugger_type == DebuggerType.GDB
-            then
+            elseif debugger_type == DebuggerType.GDB then
                 content = content .. 'run\n'
             end
         end
@@ -230,7 +230,7 @@ local function reload_breakpoint_signs(debugger_type)
         end
         local file = breakpoint.file
         local lnum = breakpoint.lnum
-        if get_filepath(debugger_type, vim.fn.expand '%') == file then
+        if get_filepath(debugger_type, vim.fn.expand('%')) == file then
             local sign_name = breakpoint.condition ~= nil
                     and 'BrkConditionalBreakpoint'
                 or 'BrkBreakpoint'
@@ -271,56 +271,57 @@ end
 local function breakpoint_from_line(debugger_type, initfile_linenr, line)
     local lnum, file, name, symbol, condition, modname
     if debugger_type == DebuggerType.GDB then
-        file = line:match 'break%s+([^:]+):'
+        file = line:match('break%s+([^:]+):')
         if file == nil then
             -- Parse as a symbol breakpoint
-            symbol = line:match 'break%s+([^:]+)'
+            symbol = line:match('break%s+([^:]+)')
             if symbol == nil then
                 return nil
             end
         end
-        lnum = line:match ':(%d+)'
-        condition = line:match ' if (.+)'
+        lnum = line:match(':(%d+)')
+        condition = line:match(' if (.+)')
     elseif debugger_type == DebuggerType.LLDB then
-        file = line:match ' --file ([^ ]+)'
+        file = line:match(' --file ([^ ]+)')
         if file == nil then
             -- Parse as a symbol breakpoint
-            symbol = line:match ' -n ([^ ]+)'
+            symbol = line:match(' -n ([^ ]+)')
             if symbol == nil then
                 return nil
             end
         end
-        lnum = line:match ' --line ([^ ]+)'
-        condition = line:match ' --condition (.+)'
+        lnum = line:match(' --line ([^ ]+)')
+        condition = line:match(' --condition (.+)')
     elseif debugger_type == DebuggerType.DELVE then
-        file = line:match 'break%s+[a-zA-Z0-9]+%s+([^:]+):'
-        name = line:match 'break%s+([a-zA-Z0-9]+)'
+        file = line:match('break%s+[a-zA-Z0-9]+%s+([^:]+):')
+        name = line:match('break%s+([a-zA-Z0-9]+)')
 
         if file == nil then
             -- Parse as a symbol breakpoint
-            symbol = line:match 'break%s+([a-zA-Z0-9]+)'
+            symbol = line:match('break%s+([a-zA-Z0-9]+)')
             if symbol == nil then
                 -- Parse as a conditional line
-                name = line:match 'cond%s+([a-zA-Z0-9]+)'
-                condition = line:match 'cond%s+[a-zA-Z0-9]+%s+(.*)'
+                name = line:match('cond%s+([a-zA-Z0-9]+)')
+                condition = line:match('cond%s+[a-zA-Z0-9]+%s+(.*)')
                 if name == nil then
                     return nil
                 end
             end
         else
             -- Parse as a line based breakpoint
-            lnum = line:match ':(%d+)'
+            lnum = line:match(':(%d+)')
         end
     elseif debugger_type == DebuggerType.JDB then
-        file = line:match '^#%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+):%d+'
+        file = line:match('^#%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+):%d+')
         if file == nil then
             -- Parse as a 'stop in' line
-            modname = line:match 'stop in%s+([-_a-zA-Z0-9.]+)'
-            lnum = line:match 'stop in%s+[-_a-zA-Z0-9.]+:(%d+)'
+            modname = line:match('stop in%s+([-_a-zA-Z0-9.]+)')
+            lnum = line:match('stop in%s+[-_a-zA-Z0-9.]+:(%d+)')
         else
             -- Parse as a hint comment for the filepath
-            modname = line:match '^#%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+):%d+'
-            lnum = line:match '^#%s+[-_a-zA-Z0-9.]+%s+[-_a-zA-Z0-9/.]+:(%d+)'
+            modname =
+                line:match('^#%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+):%d+')
+            lnum = line:match('^#%s+[-_a-zA-Z0-9.]+%s+[-_a-zA-Z0-9/.]+:(%d+)')
         end
 
         if modname == nil then
@@ -338,11 +339,11 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
         -- to avoid collisions when combining.
         name = modname .. tostring(lnum)
     elseif debugger_type == DebuggerType.GHCI then
-        file = line:match '^--%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+):%d+'
+        file = line:match('^--%s+[-_a-zA-Z0-9.]+%s+([-_a-zA-Z0-9/.]+):%d+')
         if file == nil then
             -- Parse as a ':break' line
-            modname = line:match ':break%s+([a-zA-Z0-9.]+)%s*'
-            lnum = line:match ':break%s+[a-zA-Z0-9.]+%s+(%d+)'
+            modname = line:match(':break%s+([a-zA-Z0-9.]+)%s*')
+            lnum = line:match(':break%s+[a-zA-Z0-9.]+%s+(%d+)')
             if modname ~= nil and lnum == nil then
                 -- No line number, treat as a symbol breakpoint
                 symbol = modname
@@ -350,8 +351,8 @@ local function breakpoint_from_line(debugger_type, initfile_linenr, line)
         else
             -- Parse as a hint comment for the filepath
             modname =
-                line:match '^--%s+([-_a-zA-Z0-9.]+)%s+[-_a-zA-Z0-9/.]+:%d+'
-            lnum = line:match '^--%s+[-_a-zA-Z0-9.]+%s+[-_a-zA-Z0-9/.]+:(%d+)'
+                line:match('^--%s+([-_a-zA-Z0-9.]+)%s+[-_a-zA-Z0-9/.]+:%d+')
+            lnum = line:match('^--%s+[-_a-zA-Z0-9.]+%s+[-_a-zA-Z0-9/.]+:(%d+)')
         end
 
         if modname == nil then
@@ -535,7 +536,7 @@ end
 function M.update_breakpoints(debugger_type)
     local buf = vim.api.nvim_get_current_buf()
     ---@diagnostic disable-next-line: param-type-mismatch
-    local file = get_filepath(debugger_type, vim.fn.expand '%')
+    local file = get_filepath(debugger_type, vim.fn.expand('%'))
 
     -- Determine where signs are currently placed
     local bufsigns = vim.fn.sign_getplaced(buf, { group = 'brk' })
@@ -561,7 +562,7 @@ end
 
 ---@param debugger_type DebuggerType
 function M.delete_all_breakpoints(debugger_type)
-    vim.fn.sign_unplace 'brk'
+    vim.fn.sign_unplace('brk')
     breakpoints = {}
 
     write_breakpoints_to_file(debugger_type)
@@ -580,7 +581,7 @@ function M.toggle_breakpoint(debugger_type, lnum)
         vim.fn.sign_getplaced(buf, { group = 'brk', lnum = tostring(lnum) })
     local breakpoint = {
         ---@diagnostic disable-next-line: param-type-mismatch
-        file = get_filepath(debugger_type, vim.fn.expand '%'),
+        file = get_filepath(debugger_type, vim.fn.expand('%')),
         lnum = lnum,
     }
 
@@ -613,7 +614,7 @@ function M.toggle_conditional_breakpoint(debugger_type, lnum, user_condition)
 
     local breakpoint = {
         ---@diagnostic disable-next-line: param-type-mismatch
-        file = get_filepath(debugger_type, vim.fn.expand '%'),
+        file = get_filepath(debugger_type, vim.fn.expand('%')),
         lnum = lnum,
     }
 
@@ -656,7 +657,7 @@ function M.toggle_symbol_breakpoint(debugger_type, user_symbol)
     if not save_buffer() then
         return
     end
-    local symbol = user_symbol or vim.fn.input 'Toggle symbol breakpoint: '
+    local symbol = user_symbol or vim.fn.input('Toggle symbol breakpoint: ')
     local breakpoint = { symbol = symbol }
 
     if symbol == nil or #symbol == 0 then
@@ -683,7 +684,7 @@ function M.get_breakpoints()
 end
 
 function M.list_breakpoints()
-    local initfile = require 'brk.formats.initfile'
+    local initfile = require('brk.formats.initfile')
     local header = '  ' .. initfile.get_debugger_type(vim.bo.filetype) .. '\n'
     popover.open_breakpoints_popover(breakpoints, header)
 end
