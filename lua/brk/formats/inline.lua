@@ -42,7 +42,12 @@ function M.toggle_breakpoint(filetype, lnum)
     end
 
     -- Add breakpoint marker above current line
-    local indent = string.rep(' ', vim.fn.indent(lnum))
+    local indent
+    if vim.o.expandtab then
+        indent = string.rep(' ', vim.fn.indent(lnum))
+    else
+        indent = string.rep('\t', vim.fn.indent(lnum) / vim.o.tabstop)
+    end
     local cmdstr = indent .. config.inline_cmds[filetype]
     local new_lines = { cmdstr, '' }
 

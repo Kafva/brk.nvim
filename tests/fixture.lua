@@ -18,6 +18,9 @@ function M.before_each()
 
     -- Restore files
     vim.system({ 'git', 'checkout', 'tests/files' }):wait()
+
+    vim.o.expandtab = true
+    vim.o.tabstop = 4
 end
 
 return M
