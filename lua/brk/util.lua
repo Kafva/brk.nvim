@@ -9,7 +9,10 @@ local M = {}
 function M.openfile(filepath)
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         local path = vim.api.nvim_buf_get_name(buf)
-        if path == filepath then
+        -- The `filepath` can be a relative path, if the
+        -- absolute `path` ends with the entirety of the provided
+        -- `filepath` we have a match.
+        if vim.endswith(path, filepath) then
             vim.cmd('b ' .. filepath)
             return
         end
