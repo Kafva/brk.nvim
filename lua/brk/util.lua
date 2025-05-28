@@ -32,7 +32,7 @@ function M.readfile(filepath)
         return ''
     end
 
-    content, err = uv.fs_read(fd, 8192)
+    content, err = uv.fs_read(fd, 1024 * 1024)
 
     if not content then
         vim.notify(err or ('Failed to read ' .. filepath), vim.log.levels.ERROR)
