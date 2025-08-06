@@ -13,7 +13,7 @@ fi
 
 # Run tests
 if [ $# = 0 ]; then
-    tests/tsst.nvim/tsst tests/*_test.lua || :
+    tests/tsst.nvim/tsst || :
     git checkout tests/files 2> /dev/null
 else
     tests/tsst.nvim/tsst $@
