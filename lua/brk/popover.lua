@@ -94,7 +94,7 @@ function M.open_breakpoints_popover(breakpoints, header)
     end
 
     local lines = vim.split(content, '\n')
-    open_popover(lines, 'lua', 60, 30)
+    open_popover(lines, 'markdown', 60, 30)
 end
 
 return M

@@ -79,7 +79,7 @@ end
 
 ---@param filetype string
 function M.list_breakpoints(filetype)
-    local header = '  ' .. filetype .. '\n'
+    local header = '  *' .. filetype .. '*\n'
     local breakpoints = M.get_breakpoints(filetype)
     popover.open_breakpoints_popover(breakpoints, header)
 end

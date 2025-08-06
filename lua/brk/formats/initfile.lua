@@ -685,7 +685,7 @@ end
 
 function M.list_breakpoints()
     local initfile = require('brk.formats.initfile')
-    local header = '  ' .. initfile.get_debugger_type(vim.bo.filetype) .. '\n'
+    local header = '  *' .. initfile.get_debugger_type(vim.bo.filetype) .. '*\n'
     popover.open_breakpoints_popover(breakpoints, header)
 end
 
