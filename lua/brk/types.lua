@@ -7,6 +7,7 @@
 
 ---@class BrkOptions
 ---@field default_bindings? boolean Enable default bindings
+---@field trace? boolean Enable trace logging?
 ---@field auto_start? table<string, boolean> Determine if the initfile should append an autorun command for each filetype
 ---@field preferred_debugger_format? DebuggerType
 ---@field breakpoint_sign? string

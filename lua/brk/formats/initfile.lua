@@ -234,7 +234,7 @@ local function reload_breakpoint_signs(debugger_type)
             local sign_name = breakpoint.condition ~= nil
                     and 'BrkConditionalBreakpoint'
                 or 'BrkBreakpoint'
-            -- vim.notify('Placing sign at ' .. file .. ':' .. tostring(lnum))
+            util.trace('Placing sign at ' .. file .. ':' .. tostring(lnum))
             vim.fn.sign_place(0, 'brk', sign_name, buf, {
                 lnum = lnum,
                 priority = config.breakpoint_sign_priority,
@@ -447,6 +447,12 @@ local function add_breakpoint(breakpoint)
                 and 'BrkConditionalBreakpoint'
             or 'BrkBreakpoint'
         local buf = vim.api.nvim_get_current_buf()
+        util.trace(
+            'Placing sign at '
+                .. breakpoint.file
+                .. ':'
+                .. tostring(breakpoint.lnum)
+        )
         vim.fn.sign_place(0, 'brk', sign_name, buf, {
             lnum = breakpoint.lnum,
             priority = config.breakpoint_sign_priority,
@@ -507,7 +513,7 @@ end
 ---@param debugger_type DebuggerType
 function M.load_breakpoints(debugger_type)
     local initfile_path = config.initfile_paths[debugger_type]
-    local ok, _ = uv.fs_access(initfile_path, 'r')
+    local ok, err = uv.fs_access(initfile_path, 'r')
     -- Always reset before reloading
     breakpoints = {}
 
@@ -519,6 +525,8 @@ function M.load_breakpoints(debugger_type)
                 table.insert(breakpoints, breakpoint)
             end
         end
+    else
+        util.trace("No readable initfile: '" .. tostring(err) .. "'")
     end
 
     if

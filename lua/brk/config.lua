@@ -12,6 +12,7 @@ DebuggerType = {
 ---@type BrkOptions
 M.default_opts = {
     default_bindings = true,
+    trace = false,
     auto_start = {
         ['c'] = true,
         ['cpp'] = true,

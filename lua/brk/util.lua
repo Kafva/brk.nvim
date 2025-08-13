@@ -1,3 +1,5 @@
+local config = require('brk.config')
+
 ---@type uv
 local uv = vim.uv
 
@@ -70,6 +72,22 @@ function M.writefile(filepath, mode, content)
         vim.notify(err, vim.log.levels.ERROR)
         return
     end
+end
+
+---@param message string
+function M.trace(message)
+    if not config.trace then
+        return
+    end
+
+    local d = debug.getinfo(2, 'Sl')
+    local s = string.format(
+        '%s:%d: %s',
+        vim.fs.basename(d.short_src),
+        d.currentline,
+        message
+    )
+    vim.notify(s, vim.log.levels.INFO)
 end
 
 return M

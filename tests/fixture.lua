@@ -21,6 +21,12 @@ function M.before_each()
 
     vim.o.expandtab = true
     vim.o.tabstop = 4
+
+    -- Setup with trace logging
+    require('brk').setup({
+        default_bindings = false,
+        trace = true,
+    })
 end
 
 return M

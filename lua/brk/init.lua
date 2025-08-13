@@ -1,4 +1,5 @@
 local config = require('brk.config')
+local util = require('brk.util')
 local initfile = require('brk.formats.initfile')
 local inline = require('brk.formats.inline')
 
@@ -8,7 +9,7 @@ local M = {}
 function M.load_breakpoints(filetype)
     if vim.tbl_contains(config.initfile_filetypes, filetype) then
         local debugger_type = initfile.get_debugger_type(filetype)
-        -- vim.notify("Loading:" .. filetype .. " [" ..  debugger_type .. "]", vim.log.levels.TRACE)
+        util.trace('Loading:' .. filetype .. ' [' .. debugger_type .. ']')
         initfile.load_breakpoints(debugger_type)
     elseif vim.tbl_contains(config.inline_filetypes, filetype) then
         inline.load_breakpoints()
@@ -152,6 +153,7 @@ function M.setup(user_opts)
     vim.api.nvim_create_autocmd('BufEnter', {
         pattern = config.autocmd_pattern,
         callback = function()
+            util.trace("Entering '" .. vim.bo.filetype .. "' buffer")
             if
                 vim.api.nvim_get_option_value('buftype', { buf = 0 })
                 == 'nofile'
