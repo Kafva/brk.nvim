@@ -74,6 +74,15 @@ function M.writefile(filepath, mode, content)
     end
 end
 
+---@param s string
+---@param prefix string
+function M.removeprefix(s, prefix)
+    if vim.startswith(s, prefix) then
+        return s:sub(#prefix + 1)
+    end
+    return s
+end
+
 ---@param message string
 function M.trace(message)
     if not config.trace then

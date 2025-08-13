@@ -25,8 +25,6 @@ local function save_buffer()
     return true
 end
 
--- A non-ambiguous filepath is needed for delve
--- gdb does not like leading './'
 ---@param debugger_type DebuggerType
 ---@param file string?
 local function get_filepath(debugger_type, file)
@@ -41,12 +39,15 @@ local function get_filepath(debugger_type, file)
     end
 
     if debugger_type == DebuggerType.DELVE then
-        return (vim.startswith(file, '/') or vim.startswith(file, './'))
-                and file
-            or './' .. file
-    else
-        return file
+        -- A non-ambiguous filepath is needed for delve.
+        if not vim.startswith(file, '/') and not vim.startswith(file, './') then
+            return './' .. file
+        end
+    elseif debugger_type == DebuggerType.GDB then
+        -- gdb does not like leading './'
+        return util.removeprefix(file, './')
     end
+    return file
 end
 
 ---@param debugger_type DebuggerType
@@ -220,6 +221,8 @@ end
 ---@param debugger_type DebuggerType
 local function reload_breakpoint_signs(debugger_type)
     local buf = vim.api.nvim_get_current_buf()
+    local current_file = get_filepath(debugger_type, vim.fn.expand('%'))
+    current_file = util.removeprefix(current_file, "./")
 
     -- Unplace all signs in the current buffer first
     vim.fn.sign_unplace('brk', { buffer = buf })
@@ -228,9 +231,10 @@ local function reload_breakpoint_signs(debugger_type)
         if breakpoint.file == nil then
             goto continue
         end
-        local file = breakpoint.file
+        local file = util.removeprefix(breakpoint.file, "./")
         local lnum = breakpoint.lnum
-        if get_filepath(debugger_type, vim.fn.expand('%')) == file then
+        -- Make sure to strip any leading './' for both paths
+        if current_file == file then
             local sign_name = breakpoint.condition ~= nil
                     and 'BrkConditionalBreakpoint'
                 or 'BrkBreakpoint'
@@ -522,7 +526,11 @@ function M.load_breakpoints(debugger_type)
         for i, line in pairs(vim.split(content, '\n')) do
             local breakpoint = breakpoint_from_line(debugger_type, i, line)
             if breakpoint then
+                util.trace("Parsed breakpoint from '" .. line .. "'")
+                util.trace(vim.inspect(breakpoint))
                 table.insert(breakpoints, breakpoint)
+            else
+                util.trace("No breakpoint parsed from '" .. line .. "'")
             end
         end
     else
